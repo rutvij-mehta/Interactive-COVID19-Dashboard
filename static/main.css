@@ -1,0 +1,70 @@
+html,
+body {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+nav {
+  height: 5%;
+}
+#dashboard {
+  height: 95%;
+}
+#dashboard div {
+  float: left;
+}
+#choropleth {
+  width: 60%;
+  height: 60%;
+  background: #ddd;
+}
+#barchart {
+  width: 40%;
+  height: 60%;
+  background: #aaa;
+}
+#lineplot {
+  width: 60%;
+  height: 40%;
+  background: #777;
+}
+#scatterplot {
+  width: 40%;
+  height: 40%;
+  background: #444;
+}
+
+body {
+  margin: 0;
+}
+
+svg {
+  background: #eee;
+}
+
+.sphere {
+  fill: #fff;
+}
+
+.land {
+  fill: #000;
+}
+
+.boundary {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.legendLinear text {
+  font-size: 12px;
+}
+.d3-tip {
+  line-height: 1;
+  padding: 12px;
+  background: rgba(43, 43, 43, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
