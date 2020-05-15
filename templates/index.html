@@ -14,6 +14,10 @@
       type="text/javascript"
       src="{{ url_for('static', filename = 'draw_map.js')}}"
     ></script>
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', filename = 'lineplot.js')}}"
+    ></script>
     <link
       type="text/css"
       rel="stylesheet"
@@ -28,8 +32,17 @@
     <nav>COVID 19 World Statistics</nav>
     <div id="dashboard">
       <div id="choropleth"></div>
+      <div id="lineplot">
+        
+        <span id='selection'>Change metric:
+          <select id="selectbox">
+          <option value="confirmed">Confirmed cases</option>
+          <option value="deaths">Deaths</option>
+        </select></span>
+    
+          </div>
       <div id="barchart"></div>
-      <div id="lineplot"></div>
+     
       <div id="scatterplot"></div>
     </div>
 
