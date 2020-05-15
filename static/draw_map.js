@@ -8,7 +8,7 @@ function draw_map(cv_data, map, width, height) {
   var colorScale = d3
     .scaleThreshold()
     .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
-    .range(d3.schemeBlues[9]);
+    .range(d3.schemeReds[9]);
   for (i = 0; i < cv_data.length; i++) {
     data.set(cv_data[i]["Country Code"], +cv_data[i]["TotalConfirmed"]);
   }
