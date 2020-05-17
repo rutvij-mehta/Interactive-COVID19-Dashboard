@@ -3,55 +3,27 @@ body {
   height: 100%;
   padding: 0;
   margin: 0;
-}
-nav {
-  background-color: rgb(253, 127, 23);
-  text-align: center;
-  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
-    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
-  height: max-content;
-  padding: 2px;
-}
-#dashboard {
-  height: 100%;
-}
-#dashboard div {
-  float: left;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #fff;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 #choropleth {
-  width: 49.75%;
-  height: 50%;
+  background: rgb(4, 4, 19);
+}
+#parallel {
   background: rgb(4, 4, 19);
 }
 #lineplot {
-  width: 50%;
-  height: 50%;
-
   background: rgb(4, 4, 19);
 }
 #barchart {
-  width: 49.75%;
-  height: 50%;
-
   background: rgb(4, 4, 19);
 }
 #scatterplot {
-  width: 50%;
-  height: 50%;
   background: rgb(4, 4, 19);
 }
-
-body {
-  margin: 0;
-}
-
-.sphere {
-  fill: #fff;
-}
-
 .land {
   fill: #000;
 }
@@ -110,4 +82,11 @@ body {
 
 select {
   style: none;
+}
+
+.bar {
+  fill: rgb(79, 203, 207);
+}
+.tick line {
+  visibility: hidden;
 }

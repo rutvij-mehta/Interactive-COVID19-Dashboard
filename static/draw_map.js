@@ -110,6 +110,15 @@ function draw_map(cv_data, map, width, height, us_data, us) {
       return r.CountryCode == tag ? 1 : 0;
     });
 
+    current = tag
+    bar_color = d3.select('#barchart').selectAll('rect').style('fill')
+
+    d3.select('#barchart').selectAll('rect').style('fill', function (r) {
+
+      return r['Country Code'] == current ? "red" : d3.select(this).style('fill');
+
+    })
+
 
     lp.select('.lines').append("text")
       .attr("class", "title-text")
@@ -129,6 +138,12 @@ function draw_map(cv_data, map, width, height, us_data, us) {
     // tip.hide();
     lp.selectAll('path').style('opacity', 0.85);
     lp.select(".title-text").remove();
+
+    d3.select('#barchart').selectAll('rect').style('fill', function (r) {
+
+      return bar_color;
+
+    })
 
 
   };
