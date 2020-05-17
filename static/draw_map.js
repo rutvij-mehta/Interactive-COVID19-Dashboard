@@ -1,10 +1,11 @@
 // The svg
-function draw_map(cv_data, map, width, height) {
+function draw_map(cv_data, map, width, height, us_data, us) {
 
   var initX;
   var mouseClicked = false;
   var s = 1;
   var rotated = 0;
+
   var data = d3.map();
   var colorScale = d3
     .scaleThreshold()
@@ -19,12 +20,18 @@ function draw_map(cv_data, map, width, height) {
   //need to store this because on zoom end, using mousewheel, mouse position is NAN
   var mouse;
 
+
+
   const projection = d3
     .geoMercator()
     .center([0, 40])
     .translate([width / 2, height / 2])
     .scale((width - 1) / 2 / Math.PI);
   var path = d3.geoPath().projection(projection);
+
+
+
+
 
 
   const zoom = d3
@@ -49,10 +56,7 @@ function draw_map(cv_data, map, width, height) {
 
   svg.call(zoom);
 
-  function rotateMap(endX) {
-    projection.rotate([rotated + ((endX - initX) * 360) / (s * width), 0, 0]);
-    g.selectAll("path").attr("d", path);
-  }
+
 
   function zoomended() {
     if (s !== 1) return;
@@ -79,12 +83,14 @@ function draw_map(cv_data, map, width, height) {
     g.selectAll("path") // To prevent stroke width from scaling
       .attr("transform", d3.event.transform);
   }
-  let mouseOver = function (d) {
+  var lp = d3.select('#lineplot')
+  let mouseOver = function (d, i) {
     d3.selectAll(".Country").transition().duration(200).style("opacity", 0.5);
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
     d3.select(this).transition().duration(200).style("opacity", 1);
     x1 = d3.mouse(this)[0];
     y1 = d3.mouse(this)[1];
-
+    tag = d.id
     svg
       .append("text")
       .attr("x", x1 - 5)
@@ -94,18 +100,43 @@ function draw_map(cv_data, map, width, height) {
         return d.total;
       });
 
+    name = d.properties.name
+    total = d.total
+    var color1
+    lp.selectAll('.line').style('opacity', function (r, j) {
+      if (r.CountryCode == tag)
+        color1 = d3.select(this).style('stroke')
 
-    d3.select('#lineplot').select('#US').attr("opacity", function () {
-      return 0;
-    })
+      return r.CountryCode == tag ? 1 : 0;
+    });
+
+
+    lp.select('.lines').append("text")
+      .attr("class", "title-text")
+      .style("fill", color1)
+      .text(name + " Total cases: " + total)
+      .attr("text-anchor", "middle")
+      .attr("x", (width - 100) / 2)
+      .attr("y", 5);
+
+
   };
 
   let mouseLeave = function (d) {
     d3.select("#number_textbox").remove();
-    d3.selectAll(".Country").transition().duration(200).style("opacity", 0.8);
+    d3.selectAll(".Country").transition().duration(200).style("opacity", 0.85);
     d3.select(this).transition().duration(200).style("stroke", "transparent");
     // tip.hide();
+    lp.selectAll('path').style('opacity', 0.85);
+    lp.select(".title-text").remove();
+
+
   };
+
+  let onClick = function (d) {
+    if (d.id == 'USA')
+      draw_us(us_data, height, width, us)
+  }
 
   g.append("g")
     .attr("class", "boundary")
@@ -124,7 +155,10 @@ function draw_map(cv_data, map, width, height) {
     })
     .style("opacity", 0.8)
     .on("mouseover", mouseOver)
-    .on("mouseleave", mouseLeave);
+    .on("mouseleave", mouseLeave)
+    .on("click", onClick);
 
-  // svg.call(tip);
+
+
+
 }
