@@ -1,6 +1,8 @@
 
 function draw_line_plot(data, width, height, dates) {
 
+  ylabel = "new_case"
+
 
 
   var margin = 70;
@@ -54,7 +56,7 @@ function draw_line_plot(data, width, height, dates) {
   }
   data = temp_data
 
-  console.log(data)
+
 
   data.forEach(function (d) {
     d.values.forEach(function (d) {
@@ -69,359 +71,503 @@ function draw_line_plot(data, width, height, dates) {
   });
 
 
-  /* Scale */
-  var xScale = d3.scaleTime()
-    .domain(d3.extent(data[0].values, d => d.date))
-    .range([0, width - margin]);
-
-  var yScale = d3.scaleLinear()
-    .domain([0, d3.max(max_cases)])
-    .range([height - margin, 0]);
-
-  var color = d3.scaleOrdinal(d3.schemeCategory10);
-
-  /* Add SVG */
-  var svg = d3.select("#lineplot").append("svg")
-    .attr("width", (width) + "px")
-    .attr("height", (height) + "px")
-    .append('g')
-    .attr("transform", `translate(${margin / 1.5}, ${margin / 2})`);
+  plot_data = []
+  mapping = {}
+  console.log(data)
+  for (i = 0; i < data.length; i++) {
+    last_val = data[i]["values"].pop()
+    val = data[i]["values"]
+    country_code = data[i]["CountryCode"]
+    mapping[i] = country_code
+    plot_val = []
 
 
-  /* Add line into SVG */
-  var line = d3.line()
-    .x(d => xScale(d.date))
-    .y(d => yScale(d.new_case));
+    for (j = 0; j < val.length; j++) {
+      date = val[j]["date"]
+      cases = val[j][ylabel]
+      deaths = val[j]['deaths']
+      recovered = val[j['recovered']]
+      if (isNaN(cases) || cases < 0)
+        cases = 0
+      if (isNaN(deaths) || deaths < 0)
+        deaths = 0
 
-  let lines = svg.append('g')
-    .attr('class', 'lines');
+      if (isNaN(recovered) || recovered < 0)
+        recovered = 0
 
-  lines.selectAll('.line-group')
-    .data(data).enter()
-    .append('g')
-    .attr('class', 'line-group')
-    .on("mouseover", function (d, i) {
-
-      svg.append("text")
-        .attr("class", "title-text")
-        .style("fill", color(i))
-        .text(d.name + " Total cases: " + d.total_confirmed)
-        .attr("text-anchor", "middle")
-        .attr("x", (width - margin) / 2)
-        .attr("y", 5);
-    })
-    .on("mouseout", function (d) {
-      svg.select(".title-text").remove();
-    })
-    .append('path')
-    .attr('class', 'line')
-    .attr('d', d => line(d.values))
-    .style('stroke', (d, i) => color(i))
-    .style('opacity', lineOpacity)
-    .attr('id', function (d) {
-      return d.CountryCode
-    })
-    .on("mouseover", function (d) {
-      d3.selectAll('.line')
-        .style('opacity', otherLinesOpacityHover);
-      d3.selectAll('.circle')
-        .style('opacity', circleOpacityOnLineHover);
-      d3.select(this)
-        .style('opacity', lineOpacityHover)
-        .style("stroke-width", lineStrokeHover)
-        .style("cursor", "pointer");
-
-      current = d.CountryCode
-      bar_color = d3.select('#barchart').selectAll('rect').style('fill')
-
-      d3.select('#barchart').selectAll('rect').style('fill', function (r) {
-
-        return r['Country Code'] == current ? "red" : d3.select(this).style('fill');
-
-      })
-    })
-    .on("mouseout", function (d) {
-      d3.selectAll(".line")
-        .style('opacity', lineOpacity);
-      d3.selectAll('.circle')
-        .style('opacity', circleOpacity);
-      d3.select(this)
-        .style("stroke-width", lineStroke)
-        .style("cursor", "none");
-
-      d3.select('#barchart').selectAll('rect').style('fill', function (r) {
-
-        return bar_color;
-
-      })
-    });
+      plot_val.push([date, cases, country_code, deaths, recovered])
+    }
+    plot_data.push(plot_val)
+  }
 
 
 
+  drawLinesGraph(height, width, plot_data, ylabel);
+
+  // // height2 = 
+  // /* Scale */
+  // var xScale = d3.scaleTime()
+  //   .domain(d3.extent(data[0].values, d => d.date))
+  //   .range([0, width - margin]);
+
+  // var yScale = d3.scaleLinear()
+  //   .domain([0, d3.max(max_cases)])
+  //   .range([height - 4*margin, 0]);
+
+  // // var xScale2 = d3.scaleTime()
+  // //   .domain(d3.extent(data[0].values, d => d.date))
+  // //   .range([0, width - margin]);
+
+  // // var yScale2 = d3.scaleLinear()
+  // //   .domain([0, d3.max(max_cases)])
+  // //   .range([height, height - 4*margin]);
 
 
-  /* Add circles in the line */
-  // lines.selectAll("circle-group")
+  // var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+  // /* Add SVG */
+  // var svg = d3.select("#lineplot").append("svg")
+  //   .attr("width", (width) + "px")
+  //   .attr("height", (height) + "px")
+  //   .append('g')
+  //   .attr("transform", `translate(${margin / 1.5}, ${margin / 2})`);
+
+
+  // /* Add Axis into SVG */
+  // var xAxis = d3.axisBottom(xScale).ticks(5);
+  // var yAxis = d3.axisLeft(yScale).ticks(5);
+
+  // // var xAxis2 = d3.axisBottom(xScale2).ticks(5);
+  // // var yAxis2 = d3.axisLeft(yScale2).ticks(5);
+
+  // svg.append("g")
+  //   .attr("class", "x axis")
+  //   .attr("transform", `translate(0, ${height - 4*margin})`)
+  //   .call(xAxis)
+  //   .style('stroke', '#fff')
+  //   .attr('fill', '#fff')
+
+  // svg.append("g")
+  //   .attr("class", "y axis")
+  //   .call(yAxis)
+  //   .style('stroke', '#fff')
+  //   .attr('fill', '#fff')
+  //   .append('text')
+  //   .attr("y", 15)
+  //   .attr("transform", "rotate(-90)")
+  //   .style("stroke", "#fff")
+  //   .text("Total values");
+
+  // // svg.append("g")
+  // //   .attr("class", "x axis")
+  // //   .attr("transform", `translate(0, ${height})`)
+  // //   .call(xAxis2)
+  // //   .style('stroke', '#fff')
+  // //   .attr('fill', '#fff')
+
+  // // svg.append("g")
+  // //   .attr("class", "y axis")
+  // //   .call(yAxis2)
+  // //   .style('stroke', '#fff')
+  // //   .attr('fill', '#fff')
+  // //   .append('text')
+  // //   .attr("y", 15)
+  // //   .attr("transform", "rotate(-90)")
+  // //   .style("stroke", "#fff")
+  // //   .text("Total values");
+
+  // /* Add line into SVG */
+  // var line = d3.line()
+  //   .x(d => xScale(d.date))
+  //   .y(d => yScale(d.new_case));
+
+  // // var line2 = d3.line()
+  // //   .x(d => xScale2(d.date))
+  // //   .y(d => yScale2(d.new_case)); 
+
+  // svg.append("defs").append("clipPath").attr("id", "clip").append("rect")
+  //     .attr("width", width).attr("height", height);
+
+  // let lines = svg.append('g')
+  //   .attr('class', 'lines');
+
+  // lines.selectAll('.line-group')
   //   .data(data).enter()
-  //   .append("g")
-  //   .style("fill", (d, i) => color(i))
-  //   .selectAll("circle")
-  //   .data(d => d.values).enter()
-  //   .append("g")
-  //   .attr("class", "circle")
-  //   .on("mouseover", function (d) {
-  //     d3.select(this)
-  //       .style("cursor", "pointer")
-  //       .append("text")
-  //       .attr("class", "text")
-  //       .text(`${d.confirmed}`)
-  //       .attr("x", d => xScale(d.date) + 5)
-  //       .attr("y", d => yScale(d.confirmed) - 10);
-  //   })
-  //   .on("mouseout", function (d) {
-  //     d3.select(this)
-  //       .style("cursor", "none")
-  //       .transition()
-  //       .duration(duration)
-  //       .selectAll(".text").remove();
-  //   })
-  //   .append("circle")
-  //   .attr("cx", d => xScale(d.date))
-  //   .attr("cy", d => yScale(d.confirmed))
-  //   .attr("r", circleRadius)
-  //   .style('opacity', circleOpacity)
-  //   .on("mouseover", function (d) {
-  //     d3.select(this)
-  //       .transition()
-  //       .duration(duration)
-  //       .attr("r", circleRadiusHover);
-  //   })
-  //   .on("mouseout", function (d) {
-  //     d3.select(this)
-  //       .transition()
-  //       .duration(duration)
-  //       .attr("r", circleRadius);
+  //   .append('g')
+  //   .attr('class', 'line-group')
+  //   // .on("mouseover", function (d, i) {
+
+  //   //   svg.append("text")
+  //   //     .attr("class", "title-text")
+  //   //     .style("fill", color(i))
+  //   //     .text(d.name + " Total cases: " + d.total_confirmed)
+  //   //     .attr("text-anchor", "middle")
+  //   //     .attr("x", (width - margin) / 2)
+  //   //     .attr("y", 5);
+  //   // })
+  //   // .on("mouseout", function (d) {
+  //   //   svg.select(".title-text").remove();
+  //   // })
+  //   .append('path')
+  //   .attr('class', 'line')
+  //   .attr('d', d => line(d.values))
+  //   .style('stroke', (d, i) => color(i))
+  //   .style('opacity', lineOpacity)
+  //   .attr('id', function (d) {
+  //     return d.CountryCode
   //   });
+  //   // .on("mouseover", function (d) {
+  //   //   d3.selectAll('.line')
+  //   //     .style('opacity', otherLinesOpacityHover);
+  //   //   d3.selectAll('.circle')
+  //   //     .style('opacity', circleOpacityOnLineHover);
+  //   //   d3.select(this)
+  //   //     .style('opacity', lineOpacityHover)
+  //   //     .style("stroke-width", lineStrokeHover)
+  //   //     .style("cursor", "pointer");
+
+  //   //   current = d.CountryCode
+  //   //   bar_color = d3.select('#barchart').selectAll('rect').style('fill')
+
+  //   //   d3.select('#barchart').selectAll('rect').style('fill', function (r) {
+
+  //   //     return r['Country Code'] == current ? "red" : d3.select(this).style('fill');
+
+  //   //   })
+  //   // })
+  //   // .on("mouseout", function (d) {
+  //   //   d3.selectAll(".line")
+  //   //     .style('opacity', lineOpacity);
+  //   //   d3.selectAll('.circle')
+  //   //     .style('opacity', circleOpacity);
+  //   //   d3.select(this)
+  //   //     .style("stroke-width", lineStroke)
+  //   //     .style("cursor", "none");
+
+  //   //   d3.select('#barchart').selectAll('rect').style('fill', function (r) {
+
+  //   //     return bar_color;
+
+  //   //   })
+  //   // });
 
 
-  /* Add Axis into SVG */
-  var xAxis = d3.axisBottom(xScale).ticks(5);
-  var yAxis = d3.axisLeft(yScale).ticks(5);
 
-  svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", `translate(0, ${height - margin})`)
-    .call(xAxis)
-    .style('stroke', '#fff')
-    .attr('fill', '#fff')
-
-  svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis)
-    .style('stroke', '#fff')
-    .attr('fill', '#fff')
-    .append('text')
-    .attr("y", 15)
-    .attr("transform", "rotate(-90)")
-    .style("stroke", "#fff")
-    .text("Total values");
 
 }
 
+var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel) {
 
-// function draw_line_plot(data, width, height) {
-//   var margin = { top: 10, right: 30, bottom: 30, left: 60 },
-//     width = width - margin.left - margin.right,
-//     height = height - margin.top - margin.bottom;
 
-//   var parseTime = d3.timeParse("%Y%m%d"),
-//     formatDate = d3.timeFormat("%Y-%m-%d"),
-//     bisectDate = d3.bisector((d) => d.date).left,
-//     formatValue = d3.format(",.0f");
-//   console.log(data);
-//   // append the svg object to the body of the page
-//   var svg = d3
-//     .select("#lineplot")
-//     .append("svg")
-//     .attr("width", width + margin.left + margin.right)
-//     .attr("height", height + margin.top + margin.bottom)
-//     .append("g")
-//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  var svg = d3.select('#lineplot').append('svg')
+    .attr('width', containerWidth)
+    .attr('height', containerHeight);
 
-//   for (var i = 0; i < data.length; i++) {
-//     data.date = parseTime(data.date);
-//     data.confirmed = Integer.parseInt(data.confirmed);
-//     data.deaths = Integer.parseInt(data.deaths);
-//     data.recovered = Integer.parseInt(data.recovered);
-//   }
-//   var x = d3
-//     .scaleTime()
-//     .rangeRound([margin.left, width - margin.right])
-//     .domain(d3.extent(data, (d) => d.date));
+  var margin = { top: 45, left: 85, bottom: 45, right: 45 };
 
-//   var y = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
+  var height = containerHeight - margin.top - margin.bottom;
+  var width = containerWidth - margin.right - margin.left;
 
-//   var z = d3.scaleOrdinal(d3.schemeCategory10);
+  var g = svg.append('g')
+    .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')')
+  // .attr('overflow', 'scroll');
 
-//   var line_Confirmed = d3
-//     .line()
-//     .curve(d3.curveCardinal)
-//     .x((d) => x(d.date))
-//     .y((d) => y(d.confirmed));
-//   svg
-//     .append("g")
-//     .attr("class", "x-axis")
-//     .attr("transform", "translate(0," + (height - margin.bottom) + ")")
-//     .style("border-color", "red")
-//     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b")));
+  var minX = d3.min(data, function (d) { return d3.min(d, function (e) { return e[0] }) });
+  var maxX = d3.max(data, function (d) { return d3.max(d, function (e) { return e[0] }) });
+  var minY = d3.min(data, function (d) { return d3.min(d, function (e) { return e[1] }) });
+  var maxY = d3.max(data, function (d) { return d3.max(d, function (e) { return e[1] }) });
 
-//   svg
-//     .append("g")
-//     .attr("class", "y-axis")
-//     .attr("transform", "translate(" + margin.left + ",0)");
+  var ratio = height / width;
 
-//   var focus = svg.append("g").attr("class", "focus").style("display", "none");
+  var xScale = d3.scaleTime()
+    .range([0, width])
+    .domain([minX, maxX]);
 
-//   focus
-//     .append("line")
-//     .attr("class", "lineHover")
-//     .style("stroke", "#999")
-//     .attr("stroke-width", 1)
-//     .style("shape-rendering", "crispEdges")
-//     .style("opacity", 0.5)
-//     .attr("y1", -height)
-//     .attr("y2", 0);
+  var yScale = d3.scaleLinear()
+    .range([height, 0])
+    .domain([minY, maxY]);
 
-//   focus
-//     .append("text")
-//     .attr("class", "lineHoverDate")
-//     .attr("text-anchor", "middle")
-//     .attr("font-size", 12);
+  var line = d3.line()
+    .x(function (d) { return xScale(d[0]); })
+    .y(function (d) { return yScale(d[1]); });
 
-//   var overlay = svg
-//     .append("rect")
-//     .attr("class", "overlay")
-//     .attr("x", margin.left)
-//     .attr("width", width - margin.right - margin.left)
-//     .attr("height", height);
-//   keys = d3.keys(data);
-//   update(d3.select("#selectbox").property("values"), 0);
+  var colors = d3.scaleOrdinal()
+    .domain([0, data.length])
+    .range(d3.schemeCategory20);
 
-//   function update(input, speed) {
-//     var countries = data.map(function (id) {
-//       return {
-//         id: id,
-//         values: data.map((d) => {
-//           return { date: d.date, value: +d[input] };
-//         }),
-//       };
-//     });
-//   }
+  var xAxis = d3.axisBottom(xScale),
+    yAxis = d3.axisLeft(yScale);
 
-//   //     y.domain([
-//   //       d3.min(cities, (d) => d3.min(d.values, (c) => c.degrees)),
-//   //       d3.max(cities, (d) => d3.max(d.values, (c) => c.degrees)),
-//   //     ]).nice();
+  var brush = d3.brush().on("end", brushended),
+    idleTimeout,
+    idleDelay = 350;
 
-//   //     svg
-//   //       .selectAll(".y-axis")
-//   //       .transition()
-//   //       .duration(speed)
-//   //       .call(d3.axisLeft(y).tickSize(-width + margin.right + margin.left));
+  var drag = d3.drag().on('drag', dragged);
 
-//   //     var city = svg.selectAll(".cities").data(cities);
+  svg.append("g")
+    .attr("class", "brush")
+    .call(brush);
 
-//   //     city.exit().remove();
+  g.append('g')
+    .attr('class', 'axis--x')
+    .attr('transform', 'translate(0, ' + height + ')')
+    .call(xAxis)
+    .style('stroke', '#fff');
 
-//   //     city
-//   //       .enter()
-//   //       .insert("g", ".focus")
-//   //       .append("path")
-//   //       .attr("class", "line cities")
-//   //       .style("stroke", (d) => z(d.id))
-//   //       .merge(city)
-//   //       .transition()
-//   //       .duration(speed)
-//   //       .attr("d", (d) => line(d.values));
+  g.append('g')
+    .attr('class', 'axis--y')
+    .call(yAxis)
+    .style('stroke', '#fff')
+    .append('text')
+    .attr('transform', 'rotate(-90)')
+    .attr('y', 10)
+    .attr('dy', '.1em')
+    .attr('text-anchor', 'end')
+    .attr('fill', 'rgb(54, 54, 54)')
+    .attr('font-size', '1.2em')
+    .text(yLabel)
 
-//   //     tooltip(copy);
-//   //   }
+  g.append('defs')
+    .append('clipPath')
+    .attr('id', 'clip')
+    .append('rect')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('width', width)
+    .attr('height', height);
 
-//   //   function tooltip(copy) {
-//   //     var labels = focus.selectAll(".lineHoverText").data(copy);
+  var main = g.append('g')
+    .attr('class', 'main')
+    .attr('clip-path', 'url(#clip)')
 
-//   //     labels
-//   //       .enter()
-//   //       .append("text")
-//   //       .attr("class", "lineHoverText")
-//   //       .style("fill", (d) => z(d))
-//   //       .attr("text-anchor", "start")
-//   //       .attr("font-size", 12)
-//   //       .attr("dy", (_, i) => 1 + i * 2 + "em")
-//   //       .merge(labels);
+  for (let i = 0; i < data.length; i++) {
+    main.append('path')
+      .datum(data[i])
+      .attr('id', mapping[i])
+      .attr('d', line)
+      .attr('stroke', d => colors(i))
+      .attr('stroke-width', 2)
+      .attr('fill', 'none')
+      .attr('class', 'line');
+  }
 
-//   //     var circles = focus.selectAll(".hoverCircle").data(copy);
+  function brushended() {
+    var s = d3.event.selection;
+    if (!s) {
+      if (!idleTimeout) return idleTimeout = setTimeout(idled, idleDelay);
+      xScale.domain([minX, maxX]);
+      yScale.domain([minY, maxY]);
+      revertAllGraphs_LinePlot_Time(data)
+    } else {
+      updateAllGraphs_LinePlot_Time(data, [s[0][0] * ratio, s[1][0]].map(xScale.invert, xScale))
+      xScale.domain([s[0][0] * ratio, s[1][0]].map(xScale.invert, xScale));
+      yScale.domain([s[1][1], s[0][1] * ratio].map(yScale.invert, yScale));
+      svg.select(".brush").call(brush.move, null);
+    }
+    zoom();
+  }
 
-//   //     circles
-//   //       .enter()
-//   //       .append("circle")
-//   //       .attr("class", "hoverCircle")
-//   //       .style("fill", (d) => z(d))
-//   //       .attr("r", 2.5)
-//   //       .merge(circles);
+  function idled() {
+    idleTimeout = null;
+  }
 
-//   //     svg
-//   //       .selectAll(".overlay")
-//   //       .on("mouseover", function () {
-//   //         focus.style("display", null);
-//   //       })
-//   //       .on("mouseout", function () {
-//   //         focus.style("display", "none");
-//   //       })
-//   //       .on("mousemove", mousemove);
+  function zoom() {
+    var t = svg.transition().duration(750);
+    svg.select(".axis--x").transition(t).call(xAxis);
+    g.select(".axis--y").transition(t).call(yAxis);
+    // g.selectAll(".circles").transition(t)
+    //     .attr("cx", function(d) { return xScale(d[0]); })
+    //     .attr("cy", function(d) { return yScale(d[1]); });
+    g.selectAll(".line").transition(t)
+      .attr("d", function (d) { return line(d); });
 
-//   //     function mousemove() {
-//   //       var x0 = x.invert(d3.mouse(this)[0]),
-//   //         i = bisectDate(data, x0, 1),
-//   //         d0 = data[i - 1],
-//   //         d1 = data[i],
-//   //         d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+  }
 
-//   //       focus
-//   //         .select(".lineHover")
-//   //         .attr("transform", "translate(" + x(d.date) + "," + height + ")");
+  function dragged() {
+    d3.selectAll('.line')
+      .attr('transform', `translate(${d3.event.x}, ${d3.event.y})`);
+    d3.selectAll('.line')
+      .attr('transform', `translate(${d3.event.x}, ${d3.event.y})`);
+    g.select(".axis--x").call(xAxis);
+    g.select(".axis--y").call(yAxis);
+  }
+}
 
-//   //       focus
-//   //         .select(".lineHoverDate")
-//   //         .attr(
-//   //           "transform",
-//   //           "translate(" + x(d.date) + "," + (height + margin.bottom) + ")"
-//   //         )
-//   //         .text(formatDate(d.date));
+function updateAllGraphs_LinePlot_Time(data, dates) {
+  start_date = dates[0]
+  end_date = dates[1]
+  new_data = {}
+  new_data_map = d3.map()
+  new_data_death = {}
+  new_data_recovered = {}
+  new_data_death_map = d3.map()
+  new_data_recovered_map = d3.map()
 
-//   //       focus
-//   //         .selectAll(".hoverCircle")
-//   //         .attr("cy", (e) => y(d[e]))
-//   //         .attr("cx", x(d.date));
+  domain_data_cases = []
+  domain_data_deaths = []
+  domain_data_recovered = []
+  var colorScale = d3
+    .scaleThreshold()
+    .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
+    .range(d3.schemeBlues[9]);
 
-//   //       focus
-//   //         .selectAll(".lineHoverText")
-//   //         .attr("transform", "translate(" + x(d.date) + "," + height / 2.5 + ")")
-//   //         .text((e) => e + " " + "º" + formatValue(d[e]));
 
-//   //       x(d.date) > width - width / 4
-//   //         ? focus
-//   //             .selectAll("text.lineHoverText")
-//   //             .attr("text-anchor", "end")
-//   //             .attr("dx", -10)
-//   //         : focus
-//   //             .selectAll("text.lineHoverText")
-//   //             .attr("text-anchor", "start")
-//   //             .attr("dx", 10);
-//   //     }
-//   //   }
+  i = 0
+  data.forEach(function (d) {
+    domain_data_cases[i] = 0
+    domain_data_deaths[i] = 0
+    domain_data_recovered[i] = 0
 
-//   //   var selectbox = d3.select("#selectbox").on("change", function () {
-//   //     update(this.value, 750);
-//   //   });
-// }
+    d.forEach(function (r) {
+
+      curr_date = r[0]
+      curr_value = r[1]
+      curr_country = d[0][2]
+      curr_death = r[3]
+      curr_recovered = r[4]
+      domain_data_cases[i] += curr_value
+      domain_data_deaths[i] += curr_death
+      domain_data_recovered[i] += curr_recovered
+
+
+      if (curr_date <= end_date && curr_date >= start_date) {
+        if (curr_country in new_data) {
+
+          new_data[curr_country] += curr_value
+          new_data_death[curr_country] += curr_death
+          new_data_recovered[curr_country] += curr_recovered
+        }
+        else {
+          new_data[curr_country] = curr_value
+          new_data_death[curr_country] = curr_death
+          new_data_recovered[curr_country] = curr_recovered
+        }
+
+      }
+
+
+
+    })
+    i++
+    new_data_map.set(curr_country, new_data[curr_country])
+    new_data_death_map.set(curr_country, new_data[curr_country])
+    new_data_recovered_map.set(curr_country, new_data[curr_country])
+
+  })
+
+
+  var map = d3.select("#choropleth").selectAll("path")
+    .attr("fill", function (d) {
+
+      d.total = new_data_map.get(d.id) || 0;
+      return colorScale(d.total);
+    })
+  //Bar graph
+  width = $("#barchart").width();
+  height = $("#barchart").height();
+
+  margin = { top: 25, right: 25, bottom: 25, left: 25 }
+
+  var y = d3.scaleBand()
+    .range([height - 4 * margin.top, 0])
+    .padding(0);
+
+  var xScale = d3.scaleLinear()
+    .range([0, width - 2 * margin.left]);
+
+
+  xScale.domain([0, d3.max(domain_data_cases)])
+
+
+
+
+  var bar = d3.select("#barchart").selectAll("rect")
+    .style("fill", function (d) {
+      t = new_data_map.get(d['Country Code']) || 0;
+
+      return colorScale(t);
+    })
+    .attr("width", function (d) {
+
+      t = xScale(new_data_map.get(d['Country Code'])) || 0;
+
+
+      return t
+
+    })
+
+
+
+
+
+}
+
+function revertAllGraphs_LinePlot_Time(data) {
+  new_data = {}
+  new_data_map = d3.map()
+  var colorScale = d3
+    .scaleThreshold()
+    .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
+    .range(d3.schemeBlues[9]);
+
+  margin = { top: 25, right: 25, bottom: 25, left: 25 }
+
+  data.forEach(function (d) {
+
+    d.forEach(function (r) {
+
+      curr_date = r[0]
+      curr_value = r[1]
+      curr_country = d[0][2]
+      curr_death = r[3]
+      curr_recovered = r[4]
+      if (curr_country in new_data) {
+
+        new_data[curr_country] += curr_value
+      }
+      else {
+        new_data[curr_country] = curr_value
+      }
+    })
+    new_data_map.set(curr_country, new_data[curr_country])
+
+  })
+
+  var map = d3.select("#choropleth").selectAll("path")
+    .attr("fill", function (d) {
+
+      d.total = new_data_map.get(d.id) || 0;
+      return colorScale(d.total);
+    })
+
+  var xScale = d3.scaleLinear()
+    .range([0, width - 2 * margin.left]);
+
+
+  xScale.domain([0, d3.max(Object.keys(new_data).map(function (key) {
+    return new_data[key];
+  }), function (d) {
+    return d;
+  })])
+
+
+
+
+  var bar = d3.select("#barchart").selectAll("rect")
+    .style("fill", function (d) {
+      t = new_data_map.get(d['Country Code']) || 0;
+
+      return colorScale(t);
+    })
+    .attr("width", function (d) {
+
+      t = xScale(new_data_map.get(d['Country Code'])) || 0;
+
+      return t
+
+    })
+
+
+
+
+}

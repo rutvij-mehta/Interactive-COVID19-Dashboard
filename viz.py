@@ -5,19 +5,8 @@ import numpy as np
 import requests as rs
 import pickle
 from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 import seaborn as sns
-
-app = Flask(__name__)
-
-
-@app.route("/", methods=['POST', 'GET'])
-def index():
-    return render_template("index.html")
-
-
-@app.route("/data", methods=['POST', 'GET'])
-def data():
-    return jsonify({'dataframe_world': COVID_world, 'dataframe_US': COVID_19_data_US, 'map': map_polygon, 'us': us, 'timeseries': COVID_19_time_series, 'dates': dates, 'parallel_cords': population})
 
 
 def get_map_data():
@@ -76,7 +65,6 @@ def get_time_series():
     countries = list(d.keys())
     dates = pd.json_normalize(d[countries[0]])[
         'date']
-
     dates = dates.to_json(orient='split')
     COVID_19_time_series, mapping = preprocessing(d, countries)
     return COVID_19_time_series, dates, mapping
@@ -143,6 +131,7 @@ def preprocessing(COVID_19_time_series, countries):
 
 
 if __name__ == "__main__":
+
     with open('sampledic.pickle', 'rb') as f:
         sample_dic = pickle.load(f)
 
@@ -179,21 +168,22 @@ if __name__ == "__main__":
         subset=['Country Code', 'Cases', 'Recovered', 'Deaths'])
 
     map_polygon, us = get_map_data()
-    """
+
     date1 = '1/22/2020'
     date2 = '3/1/2020'
     weather = pd.read_csv('weather.csv')
     start = datetime.strptime(date1, '%m/%d/%Y')
     end = datetime.strptime(date2, '%m/%d/%Y')
     step = timedelta(days=1)
-    dates1 = []
+    dates = []
     while start <= end:
-        dates1.append(str(start.date().strftime('%-m/%-d/%Y'))[:-2])
+        dates.append(str(start.date().strftime('%-m/%-d/%Y'))[:-2])
         start += step
+
     pre_covid = weather[['Country/Region',
-                         'weather_param']+dates1].sum(axis=1)/len(dates1)
-    post_covid = weather[list(set(list(weather))-set(dates1))
-                         ].sum(axis=1)/len(list(set(list(weather))-set(dates1)))
+                         'weather_param']+dates].sum(axis=1)/len(dates)
+    post_covid = weather[list(set(list(weather))-set(dates))
+                         ].sum(axis=1)/len(list(set(list(weather))-set(dates)))
     weather1 = weather[['Country/Region',
                         'weather_param']]
     weather1['pre_covid'] = pre_covid
@@ -231,13 +221,3 @@ if __name__ == "__main__":
     population['humidity_post_covid'] = population['Country Code'].apply(
         lambda x: min_temp_post_covid[x] if x in max_temp_post_covid else None)
     population.dropna(inplace=True)
-    population = population.drop(
-        columns=['Yearly Change %', 'Net Change', 'World Share %', 'Urban Pop %'])
-    """
-    population = population.drop(
-        columns=['Yearly Change %', 'Net Change', 'World Share %', 'Urban Pop %'])
-    population.dropna(inplace=True)
-
-    population = population.reset_index(drop=True).to_json(orient='records')
-
-    app.run(debug=True)

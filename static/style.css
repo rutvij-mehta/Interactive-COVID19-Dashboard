@@ -87,6 +87,88 @@ select {
 .bar {
   fill: rgb(79, 203, 207);
 }
-.tick line {
+#barchart line {
+  opacity: 0;
+}
+#parallel .tick line {
   visibility: hidden;
+}
+
+#parallel .parcoords {
+  display: block;
+}
+
+#parallel .parcoords svg,
+#parallel .parcoords canvas {
+  font: 10px sans-serif;
+  position: absolute;
+}
+
+.parcoords canvas {
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+#parallel .axis .title {
+  font-size: 10px;
+  transform: translate(-5px, -6px);
+  fill: #fff;
+}
+
+#parallel .axis line,
+#parallel .axis path {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1px;
+}
+
+#parallel .axis .tick text {
+  fill: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#parallel .axis.manufac_name .tick text,
+#parallel .axis.food_group .tick text {
+  opacity: 1;
+}
+
+#parallel .axis:hover line,
+#parallel .axis:hover path,
+#parallel .axis.active line,
+#parallel .axis.active path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1px;
+}
+
+#parallel .axis:hover .title {
+  font-weight: bold;
+}
+
+#parallel .axis:hover .tick text {
+  opacity: 1;
+}
+
+#parallel .axis.active .title {
+  font-weight: bold;
+}
+
+#parallel .axis.active .tick text {
+  opacity: 1;
+  font-weight: bold;
+}
+
+#parallel .brush .extent {
+  fill-opacity: 0.3;
+  stroke: #fff;
+  stroke-width: 1px;
+}
+
+#parallel canvas {
+  z-index: 1;
+}
+
+#parallel svg {
+  z-index: 2;
 }

@@ -1,12 +1,14 @@
 function draw_bar(data, width, height) {
     margin = { top: 25, right: 25, bottom: 25, left: 25 }
-    console.log(height)
+
+
+
     var y = d3.scaleBand()
         .range([height - 4 * margin.top, 0])
         .padding(0);
 
     var x = d3.scaleLinear()
-        .range([0, width]);
+        .range([0, width - 2 * margin.left]);
 
     var svg = d3.select("#barchart").append("svg")
         .attr("width", width)
@@ -31,7 +33,7 @@ function draw_bar(data, width, height) {
 
     })
 
-    console.log(reduced)
+
     data = reduced
 
 
@@ -55,7 +57,7 @@ function draw_bar(data, width, height) {
     // add the x Axis
     svg.append("g")
         .attr("transform", "translate(0," + (- 20) + ")")
-        .call(d3.axisBottom(x).tickFormat(d3.format(".0s")))
+        .call(d3.axisBottom(x).tickFormat(d3.formatPrefix(".1", 1e6)))
         .style('stroke', '#fff');
 
     // add the y Axis

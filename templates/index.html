@@ -32,6 +32,10 @@
     type="text/javascript"
     src="{{ url_for('static', filename = 'draw_us.js')}}"
   ></script>
+  <script
+    type="text/javascript"
+    src="{{ url_for('static', filename = 'parallel.js')}}"
+  ></script>
     <link
       type="text/css"
       rel="stylesheet"
@@ -41,31 +45,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>
     <script src="https://unpkg.com/topojson-client@3"></script>
     <!script src="//unpkg.com/topojson@3"></script>
+    <script src="https://bl.ocks.org/syntagmatic/raw/3341641/render-queue.js"></script>
     
   </head>
   <body>
-   <!--
-
-    <div id="dashboard">
-      <div id="choropleth"></div>
-      <div id="lineplot">
-        
-        <span id='selection'>Change metric:
-          <select id="selectbox">
-          <option value="confirmed">Confirmed cases</option>
-          <option value="deaths">Deaths</option>
-        </select></span>
-    
-          </div>
-      <div id="barchart"></div>
-     
-      <div id="scatterplot"></div>
-    </div>
--->
+   
     
       <div class="container-fluid h-100" id='dashboard'>
         <div class="row h-100">
-          <div class="col-md-9 no-gutter">
+          <div class="col-md-10 no-gutter">
            
             <div class="row h-50">
               <div class="col-md-6 no-float no-gutter" id="choropleth">
@@ -76,15 +64,15 @@
               </div>
             </div>
               <div class="row h-50">
-                <div class="col-md-8 no-float no-gutter" id="parallel">
+                <div class="col-md-6 no-float no-gutter" id="parallel">
                   
                 </div>
-                <div class="col-md-4 no-float no-gutter" id="scatterplot">
+                <div class="col-md-6 no-float no-gutter" id="scatterplot">
                   
                 </div>
               </div>
           </div>
-          <div class="col-md-3 no-gutter" id="barchart">
+          <div class="col-md-2 no-gutter" id="barchart">
           </div>
         </div>
 

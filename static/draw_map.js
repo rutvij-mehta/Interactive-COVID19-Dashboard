@@ -1,10 +1,11 @@
 // The svg
-function draw_map(cv_data, map, width, height, us_data, us) {
+function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
 
   var initX;
   var mouseClicked = false;
   var s = 1;
   var rotated = 0;
+  ylabel = "new_case"
 
   var data = d3.map();
   var colorScale = d3
@@ -12,15 +13,101 @@ function draw_map(cv_data, map, width, height, us_data, us) {
     .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
     .range(d3.schemeBlues[9]);
   mapping_country = {}
+
+  // var parseDate = d3.timeParse("%Y-%m-%d");
+  // temp_data = []
+  // max_cases = []
+  // keys = d3.keys(cv_data)
+
+
+  // for (var i = 0; i < keys.length; i++) {
+  //   var name = keys[i];
+
+  //   var value = cv_data[name];
+  //   var cc = value.pop()
+  //   var code = cc['CountryCode']
+  //   c = [value[0]['confirmed']]
+  //   d = [value[0]['deaths']]
+  //   r = [value[0]['recovered']]
+  //   value[0]['new_case'] = c[0]
+  //   value[0]['new_death'] = d[0]
+  //   value[0]['new_recovered'] = r[0]
+  //   for (var j = 1; j < dates.length - 1; j++) {
+  //     c[j] = value[j]['confirmed'] - value[j - 1]['confirmed']
+  //     d[j] = value[j]['deaths'] - value[j - 1]['deaths']
+  //     r[j] = value[j]['recovered'] - value[j - 1]['recovered']
+  //     value[j]['new_case'] = c[j]
+  //     value[j]['new_death'] = d[j]
+  //     value[j]['new_recovered'] = r[j]
+  //   }
+  //   max_cases[i] = d3.max(c)
+  //   var total_confirmed = d3.max(value, d => d.confirmed)
+
+  //   var total_death = d3.max(value, d => d.deaths)
+  //   var total_recovered = d3.max(value, d => d.recovered)
+
+  //   temp_data[i] = { 'name': name, 'values': value, 'total_confirmed': total_confirmed, 'total_death': total_death, 'total_recovered': total_recovered, 'CountryCode': code }
+
+  // }
+  // cv_data = temp_data
+
+
+
+  // cv_data.forEach(function (d) {
+  //   d.values.forEach(function (d) {
+  //     d.date = parseDate(d.date);
+  //     d.confirmed = +d.confirmed;
+  //     d.deaths = +d.deaths;
+  //     d.recovered = +d.recovered;
+  //     d.new_case = +d.new_case;
+  //     d.new_recovered = +d.new_recovered;
+  //     d.new_death = +d.new_death;
+  //   });
+  // });
+
+
+  // plot_data = []
+  // mapping = {}
+  // console.log(data)
+  // for (i = 0; i < cv_data.length; i++) {
+  //   last_val = cv_data[i]["values"].pop()
+  //   val = cv_data[i]["values"]
+  //   country_code = cv_data[i]["CountryCode"]
+  //   mapping[i] = country_code
+  //   plot_val = []
+
+
+  //   for (j = 0; j < val.length; j++) {
+  //     date = val[j]["date"]
+  //     cases = val[j][ylabel]
+  //     deaths = val[j]['deaths']
+  //     recovered = val[j['recovered']]
+  //     if (isNaN(cases) || cases < 0)
+  //       cases = 0
+  //     if (isNaN(deaths) || deaths < 0)
+  //       deaths = 0
+
+  //     if (isNaN(recovered) || recovered < 0)
+  //       recovered = 0
+
+  //     plot_val.push([date, cases, country_code, deaths, recovered])
+  //   }
+  //   plot_data.push(plot_val)
+  // }
+  // console.log(plot_data)
+
+
   for (i = 0; i < cv_data.length; i++) {
     data.set(cv_data[i]["Country Code"], +cv_data[i]["TotalConfirmed"]);
     mapping_country[cv_data[i]["Country Code"]] = cv_data[i]["Country"]
   }
 
+
+
   //need to store this because on zoom end, using mousewheel, mouse position is NAN
   var mouse;
 
-
+  console.log(data)
 
   const projection = d3
     .geoMercator()
@@ -104,10 +191,11 @@ function draw_map(cv_data, map, width, height, us_data, us) {
     total = d.total
     var color1
     lp.selectAll('.line').style('opacity', function (r, j) {
-      if (r.CountryCode == tag)
+
+      if (d3.select(this).attr('id') == tag)
         color1 = d3.select(this).style('stroke')
 
-      return r.CountryCode == tag ? 1 : 0;
+      return d3.select(this).attr('id') == tag ? 1 : 0;
     });
 
     current = tag

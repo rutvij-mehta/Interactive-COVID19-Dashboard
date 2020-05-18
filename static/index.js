@@ -6,7 +6,7 @@ $.get("/data", function (data) {
   width = $("#choropleth").width();
   height = $("#choropleth").height();
   us_data = data["dataframe_US"]
-  draw_map(df, map, width, height, us_data, data['us']);
+  draw_map(df, map, width, height);
 
   width = $("#lineplot").width();
   height = $("#lineplot").height();
@@ -15,6 +15,11 @@ $.get("/data", function (data) {
 
   width = $("#barchart").width();
   height = $("#barchart").height();
-  console.log(width, height)
+
   draw_bar(df, width, height);
+
+  width = $("#parallel").width();
+  height = $("#parallel").height();
+  df = JSON.parse(data["parallel_cords"]);
+  parallel(df, width, height);
 });
