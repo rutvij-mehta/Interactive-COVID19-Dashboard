@@ -1,231 +1,10 @@
-// function parallel(data, width, height) {
 
 
-//     var margin = { top: 25, right: 25, bottom: 25, left: 25 },
-//         width = width - margin.left - margin.right,
-//         height = height - margin.top - margin.bottom;
+function parallel(data, width, height, tag) {
 
-//     // append the svg object to the body of the page
-//     var svg = d3.select("#parallel")
-//         .append("svg")
-//         .attr("width", width + 3 * margin.left + margin.right)
-//         .attr("height", height + margin.top + margin.bottom)
-//         .append("g")
-//         .attr("transform",
-//             "translate(" + 2 * margin.left + "," + margin.top + ")");
-
-//     // Parse the Data
+    console.log(data)
 
 
-//     Countries = data.map(value => value.Country);
-//     CountryCodes = data.map(value => value['Country Code']);
-//     ColorRange = [d3.interpolateTurbo(0)]
-//     prev = 0
-//     for (var i = 1; i < Countries.length; i++) {
-//         ColorRange[i] = d3.interpolateTurbo(prev + 1 / Countries.length)
-//         prev = prev + 1 / Countries.length
-//     }
-//     // Color scale: give me a specie name, I return a color
-//     var color = d3.scaleOrdinal()
-//         .domain(CountryCodes)
-//         .range(ColorRange)
-
-//     data.forEach(function (d, i) {
-//         d.CountryCode = +i
-//     })
-
-//     // Here I set the list of dimension manually to control the order of axis:
-//     dimensions = d3.keys(data[0])
-//     i = dimensions.indexOf('Country')
-//     dimensions.splice(i, 1)
-//     i = dimensions.indexOf('Country Code')
-//     dimensions.splice(i, 1)
-
-
-
-//     // For each dimension, I build a linear scale. I store all in a y object
-//     var y = {}
-//     for (i in dimensions) {
-//         name = dimensions[i]
-//         y[name] = d3.scaleLinear()
-//             .domain([d3.min(data.map(value => value[name])), d3.max(data.map(value => value[name]))]) // --> Same axis range for each group
-//             // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
-//             .range([height, 0])
-//     }
-
-//     // Build the X scale -> it find the best position for each Y axis
-//     x = d3.scalePoint()
-//         .range([0, width])
-//         .domain(dimensions);
-
-//     // Highlight the specie that is hovered
-//     var highlight = function (d) {
-
-//         selected_specie = d['Country Code']
-
-//         // first every group turns grey
-//         d3.selectAll("#parallel .line")
-//             .transition().duration(200)
-//             .style("stroke", "lightgrey")
-//             .style("opacity", "0.2")
-//         // Second the hovered specie takes its color
-//         d3.selectAll("." + selected_specie)
-//             .transition().duration(200)
-//             .style("stroke", color(selected_specie))
-//             .style("opacity", "1")
-//     }
-
-//     // Unhighlight
-//     var doNotHighlight = function (d) {
-//         d3.selectAll("#parallel .line")
-//             .transition().duration(200).delay(1000)
-//             .style("stroke", function (d) { return (color(d['Country Code'])) })
-//             .style("opacity", "1")
-//     }
-
-//     // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
-//     function path(d) {
-//         return d3.line()(dimensions.map(function (p) { return [x(p), y[p](d[p])]; }));
-//     }
-
-//     // Draw the lines
-//     svg
-//         .selectAll("myPath")
-//         .data(data)
-//         .enter()
-//         .append("path")
-//         .attr("class", function (d) { return "line " + d['Country Code'] }) // 2 class for each line: 'line' and the group name
-//         .attr("d", path)
-//         .style("fill", "none")
-//         .style("stroke", function (d) { return (color(d['Country Code'])) })
-//         .style("opacity", 0.5)
-//         .on("mouseover", highlight)
-//         .on("mouseleave", doNotHighlight)
-
-//     formatValue = d3.format(".2s");
-
-//     // Draw the axis:
-//     svg.selectAll("myAxis")
-//         // For each dimension of the dataset I add a 'g' element:
-//         .data(dimensions).enter()
-//         .append("g")
-//         .attr("class", "axis")
-//         .style("stroke", "#fff")
-//         // I translate this element to its right position on the x axis
-//         .attr("transform", function (d) { return "translate(" + x(d) + ")"; })
-//         // And I build the axis with the call function
-//         .each(function (d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d]).tickFormat(function (d) { return formatValue(d) })) })
-//         // Add axis title
-//         .append("text")
-//         .style("text-anchor", "middle")
-//         .attr("y", -9)
-//         .text(function (d) { return d; })
-//         .style("fill", "white")
-
-//     d3.selectAll(".axis path")
-//         .style("stroke", 'white')
-
-//     var axes = svg.selectAll(".axis")
-
-
-//     axes.append("g")
-//         .attr("class", "brush")
-//         .each(function (d) {
-//             d3.select(this).call(d.brush = d3.brushY()
-//                 .extent([[-10, 0], [10, height]])
-//                 .on("start", brushstart)
-//                 .on("brush", brush)
-//                 .on("end", brush)
-//             )
-//         })
-//         .selectAll("rect")
-//         .attr("x", -8)
-//         .attr("width", 16);
-
-//     function brushstart() {
-//         d3.event.sourceEvent.stopPropagation();
-//     }
-
-//     var render = renderQueue(draw).rate(50);
-
-//     // Handles a brush event, toggling the display of foreground lines.
-//     function brush() {
-//         render.invalidate();
-
-//         var actives = [];
-//         svg.selectAll(".axis .brush")
-//             .filter(function (d) {
-//                 return d3.brushSelection(this);
-//             })
-//             .each(function (d) {
-//                 actives.push({
-//                     dimension: d,
-//                     extent: d3.brushSelection(this)
-//                 });
-//             });
-
-//         var selected = data.filter(function (d) {
-//             if (actives.every(function (active) {
-//                 var dim = active.dimension;
-//                 // test if point is within extents for each active brush
-//                 return dim.type.within(d[dim.key], active.extent, dim);
-//             })) {
-//                 return true;
-//             }
-//         });
-
-
-
-//     }
-//     function project(d) {
-//         return dimensions.map(function (p, i) {
-//             // check if data element has property and contains a value
-//             if (
-//                 !(p.key in d) ||
-//                 d[p.key] === null
-//             ) return null;
-
-//             return [xscale(i), p.scale(d[p.key])];
-//         });
-//     };
-
-//     function draw(d) {
-//         ctx.strokeStyle = color(d.food_group);
-//         ctx.beginPath();
-//         var coords = project(d);
-//         coords.forEach(function (p, i) {
-//             // this tricky bit avoids rendering null values as 0
-//             if (p === null) {
-//                 // this bit renders horizontal lines on the previous/next
-//                 // dimensions, so that sandwiched null values are visible
-//                 if (i > 0) {
-//                     var prev = coords[i - 1];
-//                     if (prev !== null) {
-//                         ctx.moveTo(prev[0], prev[1]);
-//                         ctx.lineTo(prev[0] + 6, prev[1]);
-//                     }
-//                 }
-//                 if (i < coords.length - 1) {
-//                     var next = coords[i + 1];
-//                     if (next !== null) {
-//                         ctx.moveTo(next[0] - 6, next[1]);
-//                     }
-//                 }
-//                 return;
-//             }
-
-//             if (i == 0) {
-//                 ctx.moveTo(p[0], p[1]);
-//                 return;
-//             }
-
-//             ctx.lineTo(p[0], p[1]);
-//         });
-//         ctx.stroke();
-//     }
-// }
-
-function parallel(data, width, height) {
 
     var margin = { top: 25, right: 25, bottom: 25, left: 75 },
         width = width - margin.left - margin.right,
@@ -383,6 +162,26 @@ function parallel(data, width, height) {
         }
         dim.scale.domain(dim.domain);
     });
+    var plot_line = []
+
+    color_mapping = {}
+    data.forEach(function (d) {
+        color_mapping[d['CountryCode']] = color(d['Country Code'])
+    })
+
+    console.log("Data before tag", data)
+    if (tag != null) {
+        data.forEach(function (d) {
+            if (tag.includes(d['Country Code'])) {
+                plot_line.push(d)
+            }
+
+        })
+        country_highlighted_color = color(plot_line[0]['Country Code'])
+        console.log(country_highlighted_color)
+        data = plot_line
+
+    }
 
 
     var render = renderQueue(draw).rate(50);
@@ -436,7 +235,12 @@ function parallel(data, width, height) {
     };
 
     function draw(d) {
+
+
         ctx.strokeStyle = color(d['Country Code']);
+        if (tag != null) {
+            ctx.strokeStyle = color_mapping[tag]
+        }
         ctx.beginPath();
         var coords = project(d);
         coords.forEach(function (p, i) {
@@ -484,7 +288,9 @@ function parallel(data, width, height) {
                 return d3.brushSelection(this);
             })
             .each(function (d) {
+
                 actives.push({
+
                     dimension: d,
                     extent: d3.brushSelection(this)
                 });
@@ -498,38 +304,38 @@ function parallel(data, width, height) {
             })) {
                 return true;
             }
+
+
         });
 
-        console.log(selected)
+        selected_codes = selected.map((value) => value['Country Code'])
+
+        console.log(selected_codes.length)
+
+        var axis;
+
+        let clicked = function (d) {
+            axis = d.key
+            d3.select("#scatterplot").select("svg").remove()
+            draw_scatter(data, $('#scatterplot').width(), $('#scatterplot').height(), data, 'Cases', axis)
+
+        }
+
+        d3.selectAll('.axis').on('click', clicked
+        )
 
 
-        // show ticks for active brush dimensions
-        // and filter ticks to only those within brush extents
-        /*
-        svg.selectAll(".axis")
-            .filter(function(d) {
-              return actives.indexOf(d) > -1 ? true : false;
-            })
-            .classed("active", true)
-            .each(function(dimension, i) {
-              var extent = extents[i];
-              d3.select(this)
-                .selectAll(".tick text")
-                .style("display", function(d) {
-                  var value = dimension.type.coerce(d);
-                  return dimension.type.within(value, extent, dimension) ? null : "none";
-                });
-            });
-    
-        // reset dimensions without active brushes
-        svg.selectAll(".axis")
-            .filter(function(d) {
-              return actives.indexOf(d) > -1 ? false : true;
-            })
-            .classed("active", false)
-            .selectAll(".tick text")
-              .style("display", null);
-        */
+
+
+        if (selected_codes.length == 185) {
+            resetAllGraphs_ParallelCords()
+
+        }
+        else {
+            updateAllGraphs_ParallelCords(selected_codes)
+        }
+
+
 
         ctx.clearRect(0, 0, width, height);
         ctx.globalAlpha = d3.min([10 / Math.pow(selected.length, 0.3), 1]);
@@ -544,3 +350,64 @@ function parallel(data, width, height) {
 function d3_functor(v) {
     return typeof v === "function" ? v : function () { return v; };
 };
+
+function updateAllGraphs_ParallelCords(selected_codes) {
+
+
+    var map = d3.select("#choropleth").selectAll("path").style("opacity", function (d) {
+
+        if (selected_codes.includes(d.id))
+            return 1
+        else if (selected_codes.includes)
+            return 0.25
+
+
+    })
+
+    var line = d3.select("#lineplot").selectAll(".line").style('opacity', function (r, j) {
+
+        if (selected_codes.includes(r[0][2])) {
+
+            return 1
+        }
+        return 0
+
+    });
+
+
+    var bar = d3.select("#barchart").selectAll("rect").style("opacity", function (r) {
+
+        if (selected_codes.includes(r['Country Code']))
+            return 1
+        else
+            return 0
+    })
+
+    var scatter = d3.select("#scatterplot").selectAll("circle")
+    scatter.style('opacity', function (r) {
+
+        if (selected_codes.includes(r['CountryCode'])) {
+            return 1
+
+        }
+        return 0.25
+
+    })
+        .attr('r', function (r) {
+            if (selected_codes.includes(r['CountryCode'])) {
+                return 10
+            }
+            return 5
+        })
+
+
+}
+
+function resetAllGraphs_ParallelCords() {
+    var map = d3.select("#choropleth").selectAll("path").style("opacity", 0.85)
+    var line = d3.select("#lineplot").selectAll(".line").style('opacity', 1)
+    var bar = d3.select("#barchart").selectAll("rect").style("opacity", 1)
+    var scatter = d3.select("#scatterplot").selectAll("circle").style("opacity", 0.5).attr('r', 5)
+
+
+}

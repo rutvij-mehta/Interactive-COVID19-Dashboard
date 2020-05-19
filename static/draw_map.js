@@ -1,113 +1,33 @@
 // The svg
-function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
+function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
 
   var initX;
   var mouseClicked = false;
   var s = 1;
   var rotated = 0;
-  ylabel = "new_case"
+  ylabel_index = 1
+
+  // createDataLinePlot(timeseries, dates, "new_case")
+
+  // plot_data = createDataMap(timeseries, dates, "new_case")
 
   var data = d3.map();
   var colorScale = d3
     .scaleThreshold()
     .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
     .range(d3.schemeBlues[9]);
-  mapping_country = {}
 
-  // var parseDate = d3.timeParse("%Y-%m-%d");
-  // temp_data = []
-  // max_cases = []
-  // keys = d3.keys(cv_data)
-
-
-  // for (var i = 0; i < keys.length; i++) {
-  //   var name = keys[i];
-
-  //   var value = cv_data[name];
-  //   var cc = value.pop()
-  //   var code = cc['CountryCode']
-  //   c = [value[0]['confirmed']]
-  //   d = [value[0]['deaths']]
-  //   r = [value[0]['recovered']]
-  //   value[0]['new_case'] = c[0]
-  //   value[0]['new_death'] = d[0]
-  //   value[0]['new_recovered'] = r[0]
-  //   for (var j = 1; j < dates.length - 1; j++) {
-  //     c[j] = value[j]['confirmed'] - value[j - 1]['confirmed']
-  //     d[j] = value[j]['deaths'] - value[j - 1]['deaths']
-  //     r[j] = value[j]['recovered'] - value[j - 1]['recovered']
-  //     value[j]['new_case'] = c[j]
-  //     value[j]['new_death'] = d[j]
-  //     value[j]['new_recovered'] = r[j]
-  //   }
-  //   max_cases[i] = d3.max(c)
-  //   var total_confirmed = d3.max(value, d => d.confirmed)
-
-  //   var total_death = d3.max(value, d => d.deaths)
-  //   var total_recovered = d3.max(value, d => d.recovered)
-
-  //   temp_data[i] = { 'name': name, 'values': value, 'total_confirmed': total_confirmed, 'total_death': total_death, 'total_recovered': total_recovered, 'CountryCode': code }
-
-  // }
-  // cv_data = temp_data
-
-
-
-  // cv_data.forEach(function (d) {
-  //   d.values.forEach(function (d) {
-  //     d.date = parseDate(d.date);
-  //     d.confirmed = +d.confirmed;
-  //     d.deaths = +d.deaths;
-  //     d.recovered = +d.recovered;
-  //     d.new_case = +d.new_case;
-  //     d.new_recovered = +d.new_recovered;
-  //     d.new_death = +d.new_death;
-  //   });
-  // });
-
-
-  // plot_data = []
-  // mapping = {}
-  // console.log(data)
-  // for (i = 0; i < cv_data.length; i++) {
-  //   last_val = cv_data[i]["values"].pop()
-  //   val = cv_data[i]["values"]
-  //   country_code = cv_data[i]["CountryCode"]
-  //   mapping[i] = country_code
-  //   plot_val = []
-
-
-  //   for (j = 0; j < val.length; j++) {
-  //     date = val[j]["date"]
-  //     cases = val[j][ylabel]
-  //     deaths = val[j]['deaths']
-  //     recovered = val[j['recovered']]
-  //     if (isNaN(cases) || cases < 0)
-  //       cases = 0
-  //     if (isNaN(deaths) || deaths < 0)
-  //       deaths = 0
-
-  //     if (isNaN(recovered) || recovered < 0)
-  //       recovered = 0
-
-  //     plot_val.push([date, cases, country_code, deaths, recovered])
-  //   }
-  //   plot_data.push(plot_val)
-  // }
-  // console.log(plot_data)
-
-
-  for (i = 0; i < cv_data.length; i++) {
-    data.set(cv_data[i]["Country Code"], +cv_data[i]["TotalConfirmed"]);
-    mapping_country[cv_data[i]["Country Code"]] = cv_data[i]["Country"]
+  // plot_data to input of map data
+  country_code_confirmed = {}
+  for (i in cv_data) {
+    country_list = cv_data[i]
+    country_code = country_list[0][2]
+    country_cases = d3.sum(country_list, function (d) { return d[ylabel_index] })
+    data.set(country_code, +country_cases);
   }
-
-
 
   //need to store this because on zoom end, using mousewheel, mouse position is NAN
   var mouse;
-
-  console.log(data)
 
   const projection = d3
     .geoMercator()
@@ -115,11 +35,6 @@ function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
     .translate([width / 2, height / 2])
     .scale((width - 1) / 2 / Math.PI);
   var path = d3.geoPath().projection(projection);
-
-
-
-
-
 
   const zoom = d3
     .zoom()
@@ -172,12 +87,13 @@ function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
   }
   var lp = d3.select('#lineplot')
   let mouseOver = function (d, i) {
-    d3.selectAll(".Country").transition().duration(200).style("opacity", 0.5);
+    d3.selectAll(".Country").transition().duration(200).style("opacity", 0.1);
     var color = d3.scaleOrdinal(d3.schemeCategory10);
     d3.select(this).transition().duration(200).style("opacity", 1);
     x1 = d3.mouse(this)[0];
     y1 = d3.mouse(this)[1];
     tag = d.id
+
     svg
       .append("text")
       .attr("x", x1 - 5)
@@ -192,10 +108,10 @@ function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
     var color1
     lp.selectAll('.line').style('opacity', function (r, j) {
 
-      if (d3.select(this).attr('id') == tag)
+      if (r[0][2] == tag)
         color1 = d3.select(this).style('stroke')
 
-      return d3.select(this).attr('id') == tag ? 1 : 0;
+      return r[0][2] == tag ? 1 : 0;
     });
 
     current = tag
@@ -208,13 +124,40 @@ function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
     })
 
 
-    lp.select('.lines').append("text")
+    lp.select('#lineplot .main').append("text")
       .attr("class", "title-text")
       .style("fill", color1)
       .text(name + " Total cases: " + total)
       .attr("text-anchor", "middle")
       .attr("x", (width - 100) / 2)
-      .attr("y", 5);
+      .attr("y", 20);
+
+
+    //parallel
+
+
+    var par = d3.select("#parallel")
+    par.select("div").remove()
+    parallel(par_data, $("#parallel").width(), $("#parallel").height(), [tag])
+
+
+    var scatter = d3.select("#scatterplot").selectAll("circle")
+    scatter.style('opacity', function (r) {
+
+      if (tag == r['CountryCode']) {
+        return 1
+
+      }
+      return 0.25
+
+    })
+      .attr('r', function (r) {
+        if (tag == r['CountryCode']) {
+          return 10
+        }
+        return 5
+      })
+
 
 
   };
@@ -232,6 +175,14 @@ function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
       return bar_color;
 
     })
+
+    var par = d3.select("#parallel")
+    par.select("div").remove()
+    parallel(par_data, $("#parallel").width(), $("#parallel").height(), null)
+
+    var scatter = d3.select("#scatterplot").selectAll("circle")
+    scatter.style("opacity", 0.5)
+    scatter.attr("r", 5)
 
 
   };
@@ -260,8 +211,5 @@ function draw_map(cv_data, map, width, height, us_data, us, df1, dates) {
     .on("mouseover", mouseOver)
     .on("mouseleave", mouseLeave)
     .on("click", onClick);
-
-
-
 
 }
