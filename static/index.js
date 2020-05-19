@@ -16,24 +16,48 @@ $.get("/data", function (data) {
   plot_data = createDataLinePlot(timeseries2, dates, "new_case")
   par_data = update_par_data(par_data, plot_data)
 
-  draw_line_plot(plot_data, width, height, par_data);
+  ColorRange = [d3.interpolateCool(0)]
+  prev = 0
+  for (var i = 1; i < plot_data.length; i++) {
+    ColorRange[i] = d3.interpolateCool(prev + 1 / plot_data.length)
+    prev = prev + 1 / plot_data.length
+  }
+
+  // ColorRange = ColorRange.reverse()
+
+  countries = []
+  for (i in plot_data) {
+    country_v = plot_data[i][0]
+    country_c = country_v[2]
+    countries.push(country_c)
+  }
+
+  var color_country_mapping = d3.scaleOrdinal()
+    //.range(["#5DA5B3", "#D58323", "#DD6CA7", "#54AF52", "#8C92E8", "#E15E5A", "#725D82", "#776327", "#50AB84", "#954D56", "#AB9C27", "#517C3F", "#9D5130", "#357468", "#5E9ACF", "#C47DCB", "#7D9E33", "#DB7F85", "#BA89AD", "#4C6C86", "#B59248", "#D8597D", "#944F7E", "#D67D4B", "#8F86C2"]);
+    .range(ColorRange)
+    .domain([0, countries.length])
+
+  // console.log(color("USA"))
+
+  console.log(plot_data)
+  draw_line_plot(plot_data, width, height, par_data, color_country_mapping);
 
   width = $("#choropleth").width();
   height = $("#choropleth").height();
-  draw_map(plot_data, map, width, height, timeseries1, JSON.parse(data['dates'])['data'], par_data);
+  draw_map(plot_data, map, width, height, timeseries1, JSON.parse(data['dates'])['data'], par_data, color_country_mapping);
 
   width = $("#barchart").width();
   height = $("#barchart").height();
-  draw_bar(plot_data, width, height);
+  draw_bar(plot_data, width, height, color_country_mapping);
 
   width = $("#scatterplot").width();
   height = $("#scatterplot").height();
-  draw_scatter(plot_data, width, height, par_data, "Cases", "Deaths");
+  draw_scatter(plot_data, width, height, par_data, "Cases", "Deaths", color_country_mapping);
 
   width = $("#parallel").width();
   height = $("#parallel").height();
   df = JSON.parse(data["parallel_cords"]);
-  parallel(par_data, width, height, null);
+  parallel(par_data, width, height, null, color_country_mapping);
 });
 
 function update_par_data(par_data, timeseries) {

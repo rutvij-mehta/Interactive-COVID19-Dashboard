@@ -1,6 +1,6 @@
 // The svg
-function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
-
+function draw_map(cv_data, map, width, height, timeseries, dates, par_data, color_country_mapping) {
+  margin = 50
   var initX;
   var mouseClicked = false;
   var s = 1;
@@ -16,6 +16,14 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
     .scaleThreshold()
     .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
     .range(d3.schemeBlues[9]);
+
+  color_map_local = {}
+  for (i in par_data) {
+
+    country_vector = par_data[i]
+    country_code = country_vector['Country Code']
+    color_map_local[country_code] = color_country_mapping(country_code)
+  }
 
   // plot_data to input of map data
   country_code_confirmed = {}
@@ -55,8 +63,27 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
 
   const g = svg.append("g");
 
+  var x = svg.append("g")
+    .attr("class", "legendThreshold")
+    .attr("transform", "scale(0.7) translate(30,450)")
+    .attr("width", 100)
+    .attr("height", 100);
 
+  x.append("text")
+    .attr("class", "caption")
+    .attr("x", 0)
+    .attr("y", -5)
+    .text("Total Confirmed");
+  var labels = ["10-499", "500-4999", "5000-9999", "10K-19K", "20K-29K", "30K-49K", "50K-499K", "500K-1M", "1M +"];
+  var legend = d3.legendColor()
+    .labels(function (d) { return labels[d.i]; })
+    .shapePadding(4)
+    .scale(colorScale);
+  svg.select(".legendThreshold")
+    .call(legend);
   svg.call(zoom);
+
+  x.selectAll("text").style("fill", 'white')
 
 
 
@@ -94,14 +121,6 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
     y1 = d3.mouse(this)[1];
     tag = d.id
 
-    svg
-      .append("text")
-      .attr("x", x1 - 5)
-      .attr("y", y1 - 5)
-      .attr("id", "number_textbox")
-      .text(function () {
-        return d.total;
-      });
 
     name = d.properties.name
     total = d.total
@@ -114,12 +133,28 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
       return r[0][2] == tag ? 1 : 0;
     });
 
+    lp.selectAll('.recovered').style('opacity', function (r, j) {
+
+      if (r[0][2] == tag)
+        color1 = d3.select(this).style('stroke')
+
+      return r[0][2] == tag ? 1 : 0;
+    });
+
+    lp.selectAll('.deaths').style('opacity', function (r, j) {
+
+      if (r[0][2] == tag)
+        color1 = d3.select(this).style('stroke')
+
+      return r[0][2] == tag ? 1 : 0;
+    });
+
     current = tag
     bar_color = d3.select('#barchart').selectAll('rect').style('fill')
 
     d3.select('#barchart').selectAll('rect').style('fill', function (r) {
 
-      return r['Country Code'] == current ? "red" : d3.select(this).style('fill');
+      return r['Country Code'] == current ? color_map_local[current] : barcolorScale(r.TotalConfirmed);
 
     })
 
@@ -138,7 +173,7 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
 
     var par = d3.select("#parallel")
     par.select("div").remove()
-    parallel(par_data, $("#parallel").width(), $("#parallel").height(), [tag])
+    parallel(par_data, $("#parallel").width(), $("#parallel").height(), [tag], color_country_mapping)
 
 
     var scatter = d3.select("#scatterplot").selectAll("circle")
@@ -158,27 +193,39 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
         return 5
       })
 
+    svg.append("g").attr("class", "databox").attr("transform", "scale(0.7) translate(" + (width - 50) + "," + (height + 100) + ")").attr("width", 100).attr("height", 100)
+
+      .append("text").attr("class", "Databox_text").text(function () {
+        name = d.properties.name
+        total_conf = d.total
+        return name + " total cases:" + total_conf
+
+      })
+
 
 
   };
 
   let mouseLeave = function (d) {
+    d3.select("#choropleth .databox").remove()
     d3.select("#number_textbox").remove();
     d3.selectAll(".Country").transition().duration(200).style("opacity", 0.85);
     d3.select(this).transition().duration(200).style("stroke", "transparent");
     // tip.hide();
     lp.selectAll('path').style('opacity', 0.85);
+    lp.selectAll('.deaths').style("opacity", 0)
+    d3.selectAll('.recovered').style("opacity", 0)
     lp.select(".title-text").remove();
 
     d3.select('#barchart').selectAll('rect').style('fill', function (r) {
 
-      return bar_color;
+      return barcolorScale(r.TotalConfirmed);
 
     })
 
     var par = d3.select("#parallel")
     par.select("div").remove()
-    parallel(par_data, $("#parallel").width(), $("#parallel").height(), null)
+    parallel(par_data, $("#parallel").width(), $("#parallel").height(), null, color_country_mapping)
 
     var scatter = d3.select("#scatterplot").selectAll("circle")
     scatter.style("opacity", 0.5)
@@ -186,6 +233,10 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data) {
 
 
   };
+  var barcolorScale = d3
+    .scaleThreshold()
+    .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
+    .range(d3.schemeBlues[9]);
 
   let onClick = function (d) {
     if (d.id == 'USA')

@@ -1,7 +1,7 @@
 
-function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_label, Y_label) {
+function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_label, Y_label, color_country_mapping) {
 
-  console.log(par_data)
+
   // X_label = "Cases"
   // Y_label = "Deaths"
 
@@ -86,6 +86,7 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
     .text("dy");
 
   var color = d3.scaleOrdinal(d3.schemeCategory10);
+  color = color_country_mapping
   var circles = g.append("g")
     .selectAll("circle")
     .data(country_code_confirmed)
@@ -95,7 +96,7 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
     .attr("id", function (d) { return d["CountryCode"] })
     .attr("cx", function (d) { return xScale(d["dx"]) })
     .attr("cy", function (d) { return yScale(d["dy"]) })
-    .style("fill", function (d) { return color(d["CountryCode"]) })
+    .style("fill", function (d) { return color_country_mapping(d["CountryCode"]) })
     .style("fill-opacity", "0.5");
   // .attr("class", "non_brushed");
 
@@ -113,7 +114,7 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
     var s = d3.event.selection;
     if (!s) {
       if (!idleTimeout1) return idleTimeout1 = setTimeout(idled, idleDelay);
-      revertAllGraphs_ScatterPlot(cv_data, par_data)
+      revertAllGraphs_ScatterPlot(cv_data, par_data, color_country_mapping)
     } else {
 
       circles.style("fill-opacity", "0.5");
@@ -132,7 +133,7 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
         return isBrushed(brush_coords, cx, cy);
       })
         .style("fill-opacity", "1")
-      updateAllGraphs_ScatterPlot(cv_data, cnt_list, par_data);
+      updateAllGraphs_ScatterPlot(cv_data, cnt_list, par_data, color_country_mapping);
       svg.select(".brush").call(brush.move, null);
     }
   }
@@ -153,7 +154,9 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
 
 }
 
-function updateAllGraphs_ScatterPlot(cv_data, cnt_list, par_data) {
+function updateAllGraphs_ScatterPlot(cv_data, cnt_list, par_data, color_country_mapping) {
+
+
 
   var line = d3.select("#lineplot").selectAll(".line").style('opacity', function (r, j) {
 
@@ -165,13 +168,18 @@ function updateAllGraphs_ScatterPlot(cv_data, cnt_list, par_data) {
 
   });
 
-
+  d3.selectAll('.deaths').style("opacity", 0)
+  d3.selectAll('.recovered').style("opacity", 0)
   var bar = d3.select("#barchart").selectAll("rect").style("opacity", function (r) {
 
     if (cnt_list.includes(r['Country Code']))
       return 1
     else
       return 0
+  })
+  var bar = d3.select("#barchart").selectAll("rect").style("fill", function (r) {
+    console.log(color_country_mapping(r["Country Code"]));
+    return color_country_mapping(r["Country Code"])
   })
 
 
@@ -194,13 +202,16 @@ function updateAllGraphs_ScatterPlot(cv_data, cnt_list, par_data) {
 
   var par = d3.select("#parallel")
   par.select("div").remove()
-  console.log('CNT_LIST ', cnt_list)
-  console.log("PAR data inside scatter", par_data)
-  parallel(par_data, $('#parallel').width(), $('#parallel').height(), cnt_list)
+  console.log("parallel", color_country_mapping)
+  parallel(par_data, $('#parallel').width(), $('#parallel').height(), cnt_list, color_country_mapping)
 
 }
 
-function revertAllGraphs_ScatterPlot(cv_data, par_data) {
+function revertAllGraphs_ScatterPlot(cv_data, par_data, color_country_mapping) {
+  var barcolorScale = d3
+    .scaleThreshold()
+    .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
+    .range(d3.schemeBlues[9]);
 
   d3.selectAll('circle').style("fill-opacity", "0.5")
 
@@ -209,6 +220,9 @@ function revertAllGraphs_ScatterPlot(cv_data, par_data) {
 
   //barchart
   d3.select("#barchart").selectAll("rect").style("opacity", 1)
+  d3.select("#barchart").selectAll("rect").style("fill", function (d) {
+    return barcolorScale(d.TotalConfirmed)
+  })
 
   //map 
   var map = d3.select("#choropleth").selectAll("path")
@@ -217,8 +231,10 @@ function revertAllGraphs_ScatterPlot(cv_data, par_data) {
     })
   var par = d3.select("#parallel")
   par.select("div").remove()
-  console.log('CNT_LIST ', cnt_list)
-  console.log("PAR data inside scatter", par_data)
-  parallel(par_data, $('#parallel').width(), $('#parallel').height(), null)
+
+  parallel(par_data, $('#parallel').width(), $('#parallel').height(), null, color_country_mapping)
+
+  d3.selectAll('.deaths').style("opacity", 0)
+  d3.selectAll('.recovered').style("opacity", 0)
 
 }

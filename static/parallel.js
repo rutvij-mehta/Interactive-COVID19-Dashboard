@@ -1,8 +1,11 @@
 
 
-function parallel(data, width, height, tag) {
+function parallel(data, width, height, tag, color_country_mapping) {
+    // console.log(ColorRange)
+    // var color_country_mapping = d3.scaleOrdinal()
+    //     //.range(["#5DA5B3", "#D58323", "#DD6CA7", "#54AF52", "#8C92E8", "#E15E5A", "#725D82", "#776327", "#50AB84", "#954D56", "#AB9C27", "#517C3F", "#9D5130", "#357468", "#5E9ACF", "#C47DCB", "#7D9E33", "#DB7F85", "#BA89AD", "#4C6C86", "#B59248", "#D8597D", "#944F7E", "#D67D4B", "#8F86C2"]);
+    //     .range(ColorRange)
 
-    console.log(data)
 
 
 
@@ -22,9 +25,9 @@ function parallel(data, width, height, tag) {
         prev = prev + 1 / Countries.length
     }
 
-    var color = d3.scaleOrdinal()
-        //.range(["#5DA5B3", "#D58323", "#DD6CA7", "#54AF52", "#8C92E8", "#E15E5A", "#725D82", "#776327", "#50AB84", "#954D56", "#AB9C27", "#517C3F", "#9D5130", "#357468", "#5E9ACF", "#C47DCB", "#7D9E33", "#DB7F85", "#BA89AD", "#4C6C86", "#B59248", "#D8597D", "#944F7E", "#D67D4B", "#8F86C2"]);
-        .range(ColorRange)
+    // var color = d3.scaleOrdinal()
+    //     //.range(["#5DA5B3", "#D58323", "#DD6CA7", "#54AF52", "#8C92E8", "#E15E5A", "#725D82", "#776327", "#50AB84", "#954D56", "#AB9C27", "#517C3F", "#9D5130", "#357468", "#5E9ACF", "#C47DCB", "#7D9E33", "#DB7F85", "#BA89AD", "#4C6C86", "#B59248", "#D8597D", "#944F7E", "#D67D4B", "#8F86C2"]);
+    //     .range(ColorRange)
     var types = {
         "Number": {
             key: "Number",
@@ -166,10 +169,10 @@ function parallel(data, width, height, tag) {
 
     color_mapping = {}
     data.forEach(function (d) {
-        color_mapping[d['CountryCode']] = color(d['Country Code'])
+        color_mapping[d['CountryCode']] = color_country_mapping(d['Country Code'])
     })
 
-    console.log("Data before tag", data)
+
     if (tag != null) {
         data.forEach(function (d) {
             if (tag.includes(d['Country Code'])) {
@@ -177,8 +180,8 @@ function parallel(data, width, height, tag) {
             }
 
         })
-        country_highlighted_color = color(plot_line[0]['Country Code'])
-        console.log(country_highlighted_color)
+        // country_highlighted_color = color_country_mapping(plot_line[0]['Country Code'])
+
         data = plot_line
 
     }
@@ -218,7 +221,7 @@ function parallel(data, width, height, tag) {
         .attr("width", 16);
 
     d3.selectAll(".axis.food_group .tick text")
-        .style("fill", color);
+        .style("fill", color_country_mapping);
 
 
 
@@ -237,10 +240,10 @@ function parallel(data, width, height, tag) {
     function draw(d) {
 
 
-        ctx.strokeStyle = color(d['Country Code']);
-        if (tag != null) {
-            ctx.strokeStyle = color_mapping[tag]
-        }
+        ctx.strokeStyle = color_country_mapping(d['Country Code']);
+        // if (tag != null) {
+        //     ctx.strokeStyle = color_country_mapping[tag]
+        // }
         ctx.beginPath();
         var coords = project(d);
         coords.forEach(function (p, i) {
@@ -317,7 +320,7 @@ function parallel(data, width, height, tag) {
         let clicked = function (d) {
             axis = d.key
             d3.select("#scatterplot").select("svg").remove()
-            draw_scatter(data, $('#scatterplot').width(), $('#scatterplot').height(), data, 'Cases', axis)
+            draw_scatter(data, $('#scatterplot').width(), $('#scatterplot').height(), data, 'Cases', axis, color_country_mapping)
 
         }
 
@@ -408,6 +411,8 @@ function resetAllGraphs_ParallelCords() {
     var line = d3.select("#lineplot").selectAll(".line").style('opacity', 1)
     var bar = d3.select("#barchart").selectAll("rect").style("opacity", 1)
     var scatter = d3.select("#scatterplot").selectAll("circle").style("opacity", 0.5).attr('r', 5)
+    d3.selectAll('.deaths').style("opacity", 0)
+    d3.selectAll('.recovered').style("opacity", 0)
 
 
 }

@@ -1,6 +1,6 @@
 
 
-function draw_line_plot(data, width, height, parallel_cords_data) {
+function draw_line_plot(data, width, height, parallel_cords_data, color_country_mapping) {
   var margin = 70;
   var duration = 250;
 
@@ -15,19 +15,28 @@ function draw_line_plot(data, width, height, parallel_cords_data) {
   var circleRadius = 3;
   var circleRadiusHover = 6;
 
-  // console.log(data)
+  color_map_local = {}
+  for (i in parallel_cords_data) {
+
+    country_vector = par_data[i]
+    country_code = country_vector['Country Code']
+    color_map_local[country_code] = color_country_mapping(country_code)
+  }
+  console.log(color_map_local)
+
+  console.log(data)
   // console.log("---------------------------")
   ylabel = "new_case"
   //plot_data = createDataLinePlot(data, dates, ylabel)
   plot_data = data
   // console.log("Input to drawLinesGraph", plot_data)
-  drawLinesGraph(height, width, plot_data, ylabel, parallel_cords_data);
+  drawLinesGraph(height, width, plot_data, ylabel, parallel_cords_data, color_map_local, color_country_mapping);
 
 
 }
 
 
-var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, parallel_cords_data) {
+var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, parallel_cords_data, color_map_local, color_country_mapping) {
   var lineOpacity = "0.85";
   var lineOpacityHover = "1";
   var otherLinesOpacityHover = "0.1";
@@ -72,9 +81,20 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
     .x(function (d) { return xScale(d[0]); })
     .y(function (d) { return yScale(d[1]); })
 
+  var line_d = d3.line()
+    .x(function (d) { return xScale(d[0]); })
+    .y(function (d) { return yScale(d[3]); })
+
+  var line_r = d3.line()
+    .x(function (d) { return xScale(d[0]); })
+    .y(function (d) { return yScale(d[4]); })
+
   var colors = d3.scaleOrdinal()
     .domain([0, data.length])
     .range(d3.schemeCategory20);
+
+  // colors = color_country_mapping
+  // console.log(colors)
 
   var xAxis = d3.axisBottom(xScale),
     yAxis = d3.axisLeft(yScale);
@@ -125,12 +145,13 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
     .attr('clip-path', 'url(#clip)')
     .attr('id', 'main_in_lineplot')
 
+  // console.log("---", data)
   for (let i = 0; i < data.length; i++) {
     main.append('path')
       .datum(data[i])
       .attr('id', mapping[i])
       .attr('d', line)
-      .attr('stroke', d => colors(i))
+      .attr('stroke', function (d) { return color_map_local[d[0][2]] })
       .attr('stroke-width', 2)
       .attr('fill', 'none')
       .attr('class', 'line')
@@ -139,7 +160,42 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
 
   }
 
-  main.selectAll('.main path').on("mouseover", function (d, i) {
+  for (let i = 0; i < data.length; i++) {
+    main.append('path')
+      .datum(data[i])
+      .attr('id', "deaths" + mapping[i])
+      .attr('d', line_d)
+      .attr('stroke', function (d) { return color_map_local[d[0][2]] })
+      .attr('stroke-width', 2)
+      .attr('fill', 'none')
+      .attr('class', 'deaths')
+      .style('opacity', '0')
+      .style('stroke-dasharray', ("5,5"))
+
+
+
+  }
+
+  for (let i = 0; i < data.length; i++) {
+    main.append('path')
+      .datum(data[i])
+      .attr('id', "recovered" + mapping[i])
+      .attr('d', line_r)
+      .attr('stroke', function (d) { return color_map_local[d[0][2]] })
+      .attr('stroke-width', 2)
+      .attr('fill', 'none')
+      .attr('class', 'recovered')
+      .style('opacity', '0')
+      .style('stroke-dasharray', ("1,1"))
+
+
+
+  }
+  var barcolorScale = d3
+    .scaleThreshold()
+    .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
+    .range(d3.schemeBlues[9]);
+  main.selectAll('.main path.line').on("mouseover", function (d, i) {
     totalStats = d[d.length - 1]
 
     d3.selectAll('.line')
@@ -153,7 +209,8 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
 
 
 
-    d3.select('.main').append('text').style("fill", colors(i)).attr("class", "title-text").text(function (r) {
+
+    d3.select('.main').append('text').style("fill", color_map_local[i]).attr("class", "title-text").text(function (r) {
       name = d[0][5]
       value = totalStats['TotalConfirmed']
 
@@ -167,8 +224,8 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
     bar_color = d3.select('#barchart').selectAll('rect').style('fill')
 
     d3.select('#barchart').selectAll('rect').style('fill', function (r) {
-
-      return r['Country Code'] == current ? "red" : d3.select(this).style('fill');
+      // console.log(r)
+      return r['Country Code'] == current ? color_map_local[current] : barcolorScale(r.TotalConfirmed);
 
     })
   })
@@ -185,9 +242,12 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
 
       d3.select('#barchart').selectAll('rect').style('fill', function (r) {
 
-        return bar_color;
+        return barcolorScale(r.TotalConfirmed);
 
       })
+
+      d3.selectAll('.deaths').style("opacity", 0)
+      d3.selectAll('.recovered').style("opacity", 0)
 
 
     })
@@ -201,9 +261,9 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
       if (!idleTimeout) return idleTimeout = setTimeout(idled, idleDelay);
       xScale.domain([minX, maxX]);
       yScale.domain([minY, maxY]);
-      revertAllGraphs_LinePlot_Time(data, og)
+      revertAllGraphs_LinePlot_Time(data, parallel_cords_data, color_country_mapping)
     } else {
-      updateAllGraphs_LinePlot_Time(data, [s[0][0] * ratio, s[1][0]].map(xScale.invert, xScale), parallel_cords_data)
+      updateAllGraphs_LinePlot_Time(data, [s[0][0] * ratio, s[1][0]].map(xScale.invert, xScale), parallel_cords_data, color_country_mapping)
       xScale.domain([s[0][0] * ratio, s[1][0]].map(xScale.invert, xScale));
       yScale.domain([s[1][1], s[0][1] * ratio].map(yScale.invert, yScale));
       svg.select(".brush").call(brush.move, null);
@@ -237,7 +297,7 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
   }
 }
 
-function updateAllGraphs_LinePlot_Time(data, dates, parallel_cords_data) {
+function updateAllGraphs_LinePlot_Time(data, dates, parallel_cords_data, color_country_mapping) {
   start_date = dates[0]
   end_date = dates[1]
   new_data = {}
@@ -358,7 +418,7 @@ function updateAllGraphs_LinePlot_Time(data, dates, parallel_cords_data) {
   par.select('div').remove()
 
 
-  parallel(temp_data, $("#parallel").width(), height = $("#parallel").height())
+  parallel(temp_data, $("#parallel").width(), height = $("#parallel").height(), null, color_country_mapping)
 
   //scatter
 
@@ -373,15 +433,15 @@ function updateAllGraphs_LinePlot_Time(data, dates, parallel_cords_data) {
     })
     scatter_data.push(temp)
   })
-  console.log(scatter_data)
+
   d3.select("#scatterplot").selectAll("svg").remove()
-  draw_scatter(scatter_data, $("#scatterplot").width(), $("#scatterplot").height(), temp_data, 'Cases', 'Deaths')
+  draw_scatter(scatter_data, $("#scatterplot").width(), $("#scatterplot").height(), temp_data, 'Cases', 'Deaths', color_country_mapping)
 
 
 
 }
 
-function revertAllGraphs_LinePlot_Time(data, parallel_cords_data) {
+function revertAllGraphs_LinePlot_Time(data, parallel_cords_data, color_country_mapping) {
 
   new_data = {}
   new_data_map = d3.map()
@@ -395,7 +455,7 @@ function revertAllGraphs_LinePlot_Time(data, parallel_cords_data) {
     .scaleThreshold()
     .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
     .range(d3.schemeBlues[9]);
-
+  // colorScale = color_country_mapping
   margin = { top: 25, right: 25, bottom: 25, left: 25 }
   j = 0
   data.forEach(function (d) {
@@ -481,11 +541,11 @@ function revertAllGraphs_LinePlot_Time(data, parallel_cords_data) {
 
   var par = d3.select('#parallel')
   par.select('div').remove()
-  parallel(temp_data, $("#parallel").width(), $("#parallel").height())
+  parallel(temp_data, $("#parallel").width(), $("#parallel").height(), null, color_country_mapping)
 
-  console.log("Reset ", data)
+
   d3.select("#scatterplot").selectAll("svg").remove()
-  draw_scatter(data, $("#scatterplot").width(), $("#scatterplot").height(), parallel_cords_data, 'Cases', 'Deaths')
+  draw_scatter(data, $("#scatterplot").width(), $("#scatterplot").height(), parallel_cords_data, 'Cases', 'Deaths', color_country_mapping)
 
 }
 

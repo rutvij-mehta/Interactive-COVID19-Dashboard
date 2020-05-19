@@ -1,5 +1,4 @@
-function draw_bar(cv_data, width, height) {
-    console.log(cv_data)
+function draw_bar(cv_data, width, height, color_country_mapping) {
     margin = { top: 25, right: 25, bottom: 25, left: 25 }
 
     data = []
@@ -15,6 +14,10 @@ function draw_bar(cv_data, width, height) {
         data.push(country_code_confirmed)
     }
 
+    var colorScale = d3
+        .scaleThreshold()
+        .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
+        .range(d3.schemeBlues[9]);
 
     var y = d3.scaleBand()
         .range([height - 4 * margin.top, 0])
@@ -62,7 +65,7 @@ function draw_bar(cv_data, width, height) {
         var scatter = d3.select("#scatterplot").selectAll("circle")
         if (!selected.includes(d['Country Code'])) {
             selected.push(d['Country Code'])
-            d3.select(this).style('fill', 'red')
+            d3.select(this).style('fill', function (d) { console.log(d); return color_country_mapping(d["Country Code"]) })
             map.style("opacity", function (r) {
                 if (selected.includes(r.id))
                     return 1
@@ -98,28 +101,30 @@ function draw_bar(cv_data, width, height) {
 
             var par = d3.select("#parallel")
             par.select("div").remove()
-            parallel(par_data, $("#parallel").width(), $("#parallel").height(), selected)
+            parallel(par_data, $("#parallel").width(), $("#parallel").height(), selected, color_country_mapping)
         }
         else {
 
-            d3.selectAll('#barchart rect').style('fill', 'rgb(79, 203, 207)')
+            d3.selectAll('#barchart rect').style('fill', function (d) { console.log(d); return colorScale(d.TotalConfirmed) })
             map.style('opacity', 0.85)
-            console.log(selected)
+
             selected = []
 
             line.style("opacity", 1)
             scatter.style("opacity", 0.5)
             scatter.attr("r", 5)
 
+
+
             var par = d3.select("#parallel")
             par.select("div").remove()
-            parallel(par_data, $("#parallel").width(), $("#parallel").height(), null)
+            parallel(par_data, $("#parallel").width(), $("#parallel").height(), null, color_country_mapping)
         }
 
         if (selected == []) {
             d3.select("#choropleth").selectAll("path")
                 .style("opacity", 0.85)
-            console.log(selected)
+
 
 
         }
@@ -133,6 +138,7 @@ function draw_bar(cv_data, width, height) {
     svg.selectAll(".bar")
         .data(data)
         .enter().append("rect")
+        .style("fill", function (d) { return colorScale(d.TotalConfirmed) })
         .attr("class", "bar")
         .attr("id", (d) => d['Country Code'])
         .attr("width", function (d) { return x(d.TotalConfirmed); })
