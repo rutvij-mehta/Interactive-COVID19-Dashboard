@@ -9,9 +9,10 @@ function parallel(data, width, height, tag, color_country_mapping) {
 
 
 
+
     var margin = { top: 25, right: 25, bottom: 25, left: 75 },
         width = width - margin.left - margin.right,
-        height = height - margin.top - margin.bottom;
+        height = height - 2 * margin.top - margin.bottom;
     innerHeight = height - 2
 
 
@@ -99,6 +100,7 @@ function parallel(data, width, height, tag, color_country_mapping) {
             type: types["Number"],
             scale: d3.scaleLinear().range([innerHeight, 0])
         },
+
     ];
 
     var xscale = d3.scalePoint()
@@ -281,6 +283,10 @@ function parallel(data, width, height, tag, color_country_mapping) {
         d3.event.sourceEvent.stopPropagation();
     }
 
+    var axis1 = 'Cases'
+    var axis2 = 'Deaths'
+    flag = 0
+
     // Handles a brush event, toggling the display of foreground lines.
     function brush() {
         render.invalidate();
@@ -315,16 +321,27 @@ function parallel(data, width, height, tag, color_country_mapping) {
 
         console.log(selected_codes.length)
 
-        var axis;
+
+
+
+
 
         let clicked = function (d) {
-            axis = d.key
+
+            if (flag == 0) {
+                axis1 = d.key
+                flag = 1
+            }
+            else {
+                axis2 = d.key
+                flag = 0
+            }
             d3.select("#scatterplot").select("svg").remove()
-            draw_scatter(data, $('#scatterplot').width(), $('#scatterplot').height(), data, 'Cases', axis, color_country_mapping)
+            draw_scatter(data, $('#scatterplot').width(), $('#scatterplot').height(), data, axis1, axis2, color_country_mapping)
 
         }
 
-        d3.selectAll('.axis').on('click', clicked
+        d3.selectAll('.axis').on('dblclick', clicked
         )
 
 
@@ -346,6 +363,14 @@ function parallel(data, width, height, tag, color_country_mapping) {
 
 
     }
+
+    d3.selectAll("#parallel .axis ").on('mouseover', function () {
+        d3.selectAll("#parallel .axis .tick text").style('opacity', 1)
+    })
+
+    d3.selectAll("#parallel .axis ").on('mouseout', function () {
+        d3.selectAll("#parallel .axis .tick text").style('opacity', 0)
+    })
 
 
 }
@@ -410,7 +435,7 @@ function resetAllGraphs_ParallelCords() {
     var map = d3.select("#choropleth").selectAll("path").style("opacity", 0.85)
     var line = d3.select("#lineplot").selectAll(".line").style('opacity', 1)
     var bar = d3.select("#barchart").selectAll("rect").style("opacity", 1)
-    var scatter = d3.select("#scatterplot").selectAll("circle").style("opacity", 0.5).attr('r', 5)
+    var scatter = d3.select("#scatterplot").selectAll("circle").style("opacity", 1).attr('r', 5)
     d3.selectAll('.deaths').style("opacity", 0)
     d3.selectAll('.recovered').style("opacity", 0)
 

@@ -15,6 +15,8 @@ function draw_line_plot(data, width, height, parallel_cords_data, color_country_
   var circleRadius = 3;
   var circleRadiusHover = 6;
 
+
+
   color_map_local = {}
   for (i in parallel_cords_data) {
 
@@ -116,7 +118,16 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
     .attr('class', 'axis--x')
     .attr('transform', 'translate(0, ' + height + ')')
     .call(xAxis)
-    .style('stroke', '#fff');
+    .style('stroke', '#fff')
+    .append('text')
+    .attr('x', width / 2)
+    .attr('y', 30)
+    .attr('dy', '.1em')
+    .attr('text-anchor', 'end')
+    .attr('fill', 'rgb(54, 54, 54)')
+    .attr('font-size', '1.2em')
+    .text("Time ")
+    ;
 
   g.append('g')
     .attr('class', 'axis--y')
@@ -129,7 +140,17 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
     .attr('text-anchor', 'end')
     .attr('fill', 'rgb(54, 54, 54)')
     .attr('font-size', '1.2em')
-    .text(yLabel)
+    .text("New Cases")
+
+  g.append("g")
+    .attr("class", "title")
+    .attr('transform', 'translate(' + width / 1.75 + ', ' + 0 + ')')
+    .append("text")
+    .attr('y', 10)
+    .attr('dy', '.1em')
+    .attr('text-anchor', 'end')
+    .attr('fill', 'rgb(256, 256, 256)')
+    .text("Time Series")
 
   g.append('defs')
     .append('clipPath')
@@ -170,7 +191,7 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
       .attr('fill', 'none')
       .attr('class', 'deaths')
       .style('opacity', '0')
-      .style('stroke-dasharray', ("5,5"))
+      .style('stroke-dasharray', ("1,1"))
 
 
 
@@ -186,16 +207,41 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
       .attr('fill', 'none')
       .attr('class', 'recovered')
       .style('opacity', '0')
-      .style('stroke-dasharray', ("1,1"))
+      .style('stroke-dasharray', ("5,5"))
 
 
 
   }
+  tooltip_data = {}
+  for (i in par_data) {
+    tooltip_data[par_data[i]['Country Code']] = par_data[i]
+  }
+
   var barcolorScale = d3
     .scaleThreshold()
     .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
     .range(d3.schemeBlues[9]);
   main.selectAll('.main path.line').on("mouseover", function (d, i) {
+
+    var tooltip = d3.select("#lineplot")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "1px")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+
+    tooltip
+      .style("opacity", 1)
+    tooltip
+      .html("" + d[0][5])
+      .style("left", (d3.mouse(this)[0] + 120) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+      .style("top", (d3.mouse(this)[1]) + "px")
+
+
+
     totalStats = d[d.length - 1]
 
     d3.selectAll('.line')
@@ -207,18 +253,33 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
       .style("stroke-width", lineStrokeHover)
       .style("cursor", "pointer");
 
+    var scatter = d3.select("#scatterplot").selectAll("circle")
+    scatter.style('opacity', function (r) {
 
+      if (d[0][2] == r['CountryCode']) {
+        return 1
 
+      }
+      return 0.25
 
-    d3.select('.main').append('text').style("fill", color_map_local[i]).attr("class", "title-text").text(function (r) {
-      name = d[0][5]
-      value = totalStats['TotalConfirmed']
+    })
+      .attr('r', function (r) {
+        if (d[0][2] == r['CountryCode']) {
+          return 10
+        }
+        return 5
+      })
 
-      return name
+    var map = d3.select("#choropleth").selectAll("path")
+    map.style("opacity", function (r) {
+      if (d[0][2] == r.id) {
+        return 1
+      }
+      else {
+        return 0.1
+      }
+    })
 
-    }).attr("text-anchor", "middle")
-      .attr("x", (width - margin.left) / 2)
-      .attr("y", 20);
 
     current = d[0][2]
     bar_color = d3.select('#barchart').selectAll('rect').style('fill')
@@ -227,7 +288,15 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
       // console.log(r)
       return r['Country Code'] == current ? color_map_local[current] : barcolorScale(r.TotalConfirmed);
 
+
     })
+
+    var par = d3.select("#parallel")
+    par.select("div").remove()
+    parallel(par_data, $("#parallel").width(), $("#parallel").height(), [d[0][2]], color_country_mapping)
+
+    par.selectAll(".axis .tick text").style("opacity", 1)
+
   })
     .on("mouseout", function (d) {
       d3.selectAll(".line")
@@ -238,7 +307,7 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
         .style("stroke-width", lineStroke)
         .style("cursor", "none");
 
-      d3.select('.main text').remove()
+
 
       d3.select('#barchart').selectAll('rect').style('fill', function (r) {
 
@@ -246,9 +315,22 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
 
       })
 
+      var map = d3.select("#choropleth").selectAll("path").style('opacity', 0.85)
+
       d3.selectAll('.deaths').style("opacity", 0)
       d3.selectAll('.recovered').style("opacity", 0)
 
+      tooltip = d3.selectAll(".tooltip")
+      tooltip
+        .remove()
+
+      var scatter = d3.select("#scatterplot").selectAll("circle")
+      scatter.style("opacity", 1)
+      scatter.attr("r", 5)
+
+      var par = d3.select("#parallel")
+      par.select("div").remove()
+      parallel(par_data, $("#parallel").width(), $("#parallel").height(), null, color_country_mapping)
 
     })
 
@@ -285,6 +367,13 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
     g.selectAll(".line").transition(t)
       .attr("d", function (d) { return line(d); });
 
+    g.selectAll(".deaths").transition(t)
+      .attr("d", function (d) { return line_r(d); });
+
+    g.selectAll(".recovered").transition(t)
+      .attr("d", function (d) { return line_d(d); });
+
+
   }
 
   function dragged() {
@@ -295,6 +384,21 @@ var drawLinesGraph = function (containerHeight, containerWidth, data, yLabel, pa
     g.select(".axis--x").call(xAxis);
     g.select(".axis--y").call(yAxis);
   }
+
+  // var legend_keys = ['new cases', 'new deaths', 'new recovered']
+  // d3.select("#lineplot").select("svg").append("g").data(legend_keys).enter().attr("width", 10).attr("height", 10).style('fill', 'white')
+
+  var t = d3.select("#lineplot svg")
+
+  // Handmade legend
+
+  t.append("text").attr("x", 160).attr("y", 85).text("__________  ").style("font-size", "10px").style("stroke", 'white').attr("alignment-baseline", "middle")
+  t.append("text").attr("x", 160).attr("y", 115).text("....... ").style("font-size", "25px").style("stroke", 'white').attr("alignment-baseline", "middle")
+  t.append("text").attr("x", 160).attr("y", 140).text("__   __   __   __ ").style("font-size", "10px").style("stroke", 'white').attr("alignment-baseline", "middle")
+
+  t.append("text").attr("x", 220).attr("y", 90).text("new cases").style("font-size", "10px").style("stroke", 'white').attr("alignment-baseline", "middle")
+  t.append("text").attr("x", 220).attr("y", 115).text("new recovered").style("font-size", "10px").style("stroke", 'white').attr("alignment-baseline", "middle")
+  t.append("text").attr("x", 220).attr("y", 145).text("new deaths").style("font-size", "10px").style("stroke", 'white').attr("alignment-baseline", "middle")
 }
 
 function updateAllGraphs_LinePlot_Time(data, dates, parallel_cords_data, color_country_mapping) {

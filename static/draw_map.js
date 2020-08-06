@@ -27,12 +27,21 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data, colo
 
   // plot_data to input of map data
   country_code_confirmed = {}
+  tooltip_data = {}
   for (i in cv_data) {
     country_list = cv_data[i]
     country_code = country_list[0][2]
     country_cases = d3.sum(country_list, function (d) { return d[ylabel_index] })
     data.set(country_code, +country_cases);
+
+
+
   }
+
+  for (i in par_data) {
+    tooltip_data[par_data[i]['Country Code']] = par_data[i]
+  }
+
 
   //need to store this because on zoom end, using mousewheel, mouse position is NAN
   var mouse;
@@ -113,7 +122,50 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data, colo
       .attr("transform", d3.event.transform);
   }
   var lp = d3.select('#lineplot')
+
+  var mouseover1 = function (d) {
+
+  }
+
+
+
+  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  var mouseleave1 = function (d) {
+    tooltip = d3.selectAll(".tooltip")
+    tooltip
+      .remove()
+  }
   let mouseOver = function (d, i) {
+    q = {}
+    tt_data = tooltip_data[d.id]
+    if (tt_data == null) {
+      tooltip_data[d.id] = { 'Deaths': 0, 'Recovered': 0 }
+
+
+    }
+
+    var tooltip1 = d3.select("#choropleth")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "1px")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+
+    tooltip1
+      .style("opacity", 1)
+
+    tooltip1
+      .html("" + d.properties.name + "<br>Cases: " + d.total + "<br>Deaths: " + tooltip_data[d.id]['Deaths'] + "<br>Recovered: " + tooltip_data[d.id]['Recovered'])
+      .style("left", (d3.mouse(this)[0] + 50) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+      .style("top", (d3.mouse(this)[1]) + "px")
+
+
+
+
+
     d3.selectAll(".Country").transition().duration(200).style("opacity", 0.1);
     var color = d3.scaleOrdinal(d3.schemeCategory10);
     d3.select(this).transition().duration(200).style("opacity", 1);
@@ -159,13 +211,13 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data, colo
     })
 
 
-    lp.select('#lineplot .main').append("text")
-      .attr("class", "title-text")
-      .style("fill", color1)
-      .text(name + " Total cases: " + total)
-      .attr("text-anchor", "middle")
-      .attr("x", (width - 100) / 2)
-      .attr("y", 20);
+    // lp.select('#lineplot .main').append("text")
+    //   .attr("class", "title-text")
+    //   .style("fill", color1)
+    //   .text(name)
+    //   .attr("text-anchor", "middle")
+    //   .attr("x", (width - 100) / 2)
+    //   .attr("y", 50);
 
 
     //parallel
@@ -174,6 +226,8 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data, colo
     var par = d3.select("#parallel")
     par.select("div").remove()
     parallel(par_data, $("#parallel").width(), $("#parallel").height(), [tag], color_country_mapping)
+
+    par.selectAll(".axis .tick text").style("opacity", 1)
 
 
     var scatter = d3.select("#scatterplot").selectAll("circle")
@@ -193,20 +247,25 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data, colo
         return 5
       })
 
-    svg.append("g").attr("class", "databox").attr("transform", "scale(0.7) translate(" + (width - 50) + "," + (height + 100) + ")").attr("width", 100).attr("height", 100)
+    // svg.append("g").attr("class", "databox").attr("transform", "scale(0.7) translate(" + (width - 50) + "," + (height + 100) + ")").attr("width", 100).attr("height", 100)
 
-      .append("text").attr("class", "Databox_text").text(function () {
-        name = d.properties.name
-        total_conf = d.total
-        return name + " total cases:" + total_conf
+    //   .append("text").attr("class", "Databox_text").text(function () {
+    //     name = d.properties.name
+    //     total_conf = d.total
+    //     return name + " total cases:" + total_conf
 
-      })
+    //   })
 
 
 
   };
 
   let mouseLeave = function (d) {
+
+    tooltip = d3.selectAll(".tooltip")
+    tooltip
+      .remove()
+
     d3.select("#choropleth .databox").remove()
     d3.select("#number_textbox").remove();
     d3.selectAll(".Country").transition().duration(200).style("opacity", 0.85);
@@ -223,12 +282,15 @@ function draw_map(cv_data, map, width, height, timeseries, dates, par_data, colo
 
     })
 
+
     var par = d3.select("#parallel")
     par.select("div").remove()
     parallel(par_data, $("#parallel").width(), $("#parallel").height(), null, color_country_mapping)
 
+    par.selectAll(".axis .tick text").style("opacity", 0)
+
     var scatter = d3.select("#scatterplot").selectAll("circle")
-    scatter.style("opacity", 0.5)
+    scatter.style("opacity", 1)
     scatter.attr("r", 5)
 
 

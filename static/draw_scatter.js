@@ -2,6 +2,35 @@
 function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_label, Y_label, color_country_mapping) {
 
 
+  var mouseover = function (d) {
+    var tooltip = d3.select("#scatterplot")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "1px")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+
+    tooltip
+      .style("opacity", 1)
+    tooltip
+      .html("" + d.CountryName)
+      .style("left", (d3.mouse(this)[0] + 120) + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+      .style("top", (d3.mouse(this)[1]) + "px")
+  }
+
+
+
+  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  var mouseleave = function (d) {
+    tooltip = d3.selectAll(".tooltip")
+    tooltip
+      .remove()
+  }
+
+
   // X_label = "Cases"
   // Y_label = "Deaths"
 
@@ -22,8 +51,8 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
 
     country_vector = par_data[i]
     country_code = country_vector['Country Code']
-    X = country_vector[X_label]
-    Y = country_vector[Y_label]
+    X = Math.log(country_vector[X_label] + 1)
+    Y = Math.log(country_vector[Y_label] + 1)
     country_name = country_vector['Country']
     country_code_confirmed.push({ "CountryCode": country_code, "dx": X, "dy": Y, "CountryName": country_name })
   }
@@ -35,6 +64,14 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
     .append("svg")
     .attr("width", containerWidth)
     .attr("height", containerHeight);
+  idleTimeout1 = 100
+  var brush = d3.brush()
+    // .on("brush", highlightBrushedCircles)
+    .on("end", brushend_scatter)
+  idleTimeout1,
+    idleDelay = 100;
+  svg.append("g")
+    .call(brush);
 
   var margin = { top: 45, left: 85, bottom: 45, right: 45 };
 
@@ -54,13 +91,20 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
   // .tickFormat(formatHsGradAxis);
 
   var g = svg.append('g')
-    .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')')
+    .attr('transform', 'translate(' + margin.left + ', ' + margin.top / 2 + ')')
 
   g.append('g')
     .attr('class', 'axis--x')
     .attr('transform', 'translate(0, ' + height + ')')
     .call(xAxis)
-    .style('stroke', '#fff');
+    .style('stroke', '#fff').append('text')
+    .attr('y', 30)
+    .attr('x', width / 2)
+    .attr('dy', '.1em')
+    .attr('text-anchor', 'end')
+    .attr('fill', 'rgb(54, 54, 54)')
+    .attr('font-size', '1.2em')
+    .text("LOG " + X_label);
 
   g.append('g')
     .attr('class', 'axis--y')
@@ -73,12 +117,12 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
     .attr('text-anchor', 'end')
     .attr('fill', 'rgb(54, 54, 54)')
     .attr('font-size', '1.2em')
-    .text("y label input here")
+    .text("LOG " + Y_label)
 
   d3.select("#axis--x")
     .append("text")
     // .attr("transform", "translate(360, -10)")
-    .text("dx");
+    .text(X_label);
 
   d3.select("#axis--y")
     .append("text")
@@ -87,6 +131,8 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
 
   var color = d3.scaleOrdinal(d3.schemeCategory10);
   color = color_country_mapping
+
+
   var circles = g.append("g")
     .selectAll("circle")
     .data(country_code_confirmed)
@@ -97,18 +143,13 @@ function draw_scatter(cv_data, containerWidth, containerHeight, par_data, X_labe
     .attr("cx", function (d) { return xScale(d["dx"]) })
     .attr("cy", function (d) { return yScale(d["dy"]) })
     .style("fill", function (d) { return color_country_mapping(d["CountryCode"]) })
-    .style("fill-opacity", "0.5");
+    .style("fill-opacity", "1");
   // .attr("class", "non_brushed");
 
-  idleTimeout1 = 100
-  var brush = d3.brush()
-    // .on("brush", highlightBrushedCircles)
-    .on("end", brushend_scatter)
-  idleTimeout1,
-    idleDelay = 100;
 
-  svg.append("g")
-    .call(brush);
+  svg.selectAll("circle").on('mouseover', mouseover).on('mouseleave', mouseleave)//.on('mousemove', mousemove)
+
+
 
   function brushend_scatter() {
     var s = d3.event.selection;
@@ -213,7 +254,7 @@ function revertAllGraphs_ScatterPlot(cv_data, par_data, color_country_mapping) {
     .domain([10, 500, 5000, 10000, 20000, 30000, 50000, 500000])
     .range(d3.schemeBlues[9]);
 
-  d3.selectAll('circle').style("fill-opacity", "0.5")
+  d3.selectAll('circle').style("fill-opacity", "1")
 
   //lineplot
   d3.select("#lineplot").selectAll(".line").style("opacity", 1)

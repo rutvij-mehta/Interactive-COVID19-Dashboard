@@ -6,6 +6,7 @@ import requests as rs
 import pickle
 from datetime import datetime, timedelta
 import seaborn as sns
+from sklearn.decomposition import PCA
 
 app = Flask(__name__)
 
@@ -17,7 +18,7 @@ def index():
 
 @app.route("/data", methods=['POST', 'GET'])
 def data():
-    return jsonify({'dataframe_world': COVID_world, 'dataframe_US': COVID_19_data_US, 'map': map_polygon, 'us': us, 'timeseries': COVID_19_time_series, 'dates': dates, 'parallel_cords': population})
+    return jsonify({'dataframe_world': COVID_world, 'dataframe_US': COVID_19_data_US, 'map': map_polygon, 'us': us, 'timeseries': COVID_19_time_series, 'dates': dates1, 'parallel_cords': population})
 
 
 def get_map_data():
@@ -80,6 +81,12 @@ def get_time_series():
     dates = dates.to_json(orient='split')
     COVID_19_time_series, mapping = preprocessing(d, countries)
     return COVID_19_time_series, dates, mapping, countries
+
+
+def generate_PCA(data):
+    data.drop(columns=['Country Code', 'Country'], inplace=True)
+    pca = PCA(n_components=2, svd_solver='full')
+    return pd.DataFrame(pca.fit_transform(data), columns=['PC1', 'PC2']).reset_index(drop=True)
 
 
 def preprocessing(COVID_19_time_series, countries):
@@ -149,6 +156,7 @@ if __name__ == "__main__":
     COVID_19_data_US = get_US_data()
     COVID_world, Countries, temp = get_COVID_world_data()
     COVID_19_time_series, dates, mapping, countries = get_time_series()
+    print(COVID_19_time_series['US'])
     population = pd.read_csv('pop.csv')
     population = population.rename(
         {'Country (or dependency)': 'Country', 'Population (2020)': 'Population'}, axis='columns')
@@ -182,7 +190,60 @@ if __name__ == "__main__":
 
     population = population.drop(
         columns=['Yearly Change %', 'Net Change', 'World Share %', 'Urban Pop %'])
-    print(len(population))
+
+    date1 = '1/22/2020'
+    date2 = '3/1/2020'
+    weather = pd.read_csv('weather.csv')
+    start = datetime.strptime(date1, '%m/%d/%Y')
+    end = datetime.strptime(date2, '%m/%d/%Y')
+    step = timedelta(days=1)
+    dates1 = dates
+    dates = []
+    while start <= end:
+        dates.append(str(start.date().strftime('%-m/%-d/%Y'))[:-2])
+        start += step
+
+    pre_covid = weather[['Country/Region',
+                         'weather_param']+dates].sum(axis=1)/len(dates)
+    post_covid = weather[list(set(list(weather))-set(dates))
+                         ].sum(axis=1)/len(list(set(list(weather))-set(dates)))
+    weather1 = weather[['Country/Region',
+                        'weather_param']]
+    weather1['pre_covid'] = pre_covid
+    weather1['post_covid'] = post_covid
+    weather1["Country Code"] = weather1["Country/Region"].apply(
+        lambda x: combined_mapping[x] if x in combined_mapping else None)
+    maxtemp = weather1[weather1['weather_param'] ==
+                       'maxtempC'][['Country Code', 'pre_covid', 'post_covid']]
+    mintemp = weather1[weather1['weather_param'] ==
+                       'mintempC'][['Country Code', 'pre_covid', 'post_covid']]
+    humidity = weather1[weather1['weather_param'] == 'humidity'][[
+        'Country Code', 'pre_covid', 'post_covid']]
+    max_temp_pre_covid = pd.Series(
+        maxtemp['pre_covid'].values, index=maxtemp['Country Code']).to_dict()
+    min_temp_pre_covid = pd.Series(
+        mintemp['pre_covid'].values, index=mintemp['Country Code']).to_dict()
+    humidity_pre_covid = pd.Series(
+        humidity['pre_covid'].values, index=humidity['Country Code']).to_dict()
+    max_temp_post_covid = pd.Series(
+        maxtemp['post_covid'].values, index=maxtemp['Country Code']).to_dict()
+    min_temp_post_covid = pd.Series(
+        mintemp['post_covid'].values, index=mintemp['Country Code']).to_dict()
+    humidity_post_covid = pd.Series(
+        humidity['post_covid'].values, index=humidity['Country Code']).to_dict()
+    population['max_temp_pre_covid'] = population['Country Code'].apply(
+        lambda x: max_temp_pre_covid[x] if x in max_temp_post_covid else None)
+    population['min_temp_pre_covid'] = population['Country Code'].apply(
+        lambda x: min_temp_pre_covid[x] if x in max_temp_post_covid else None)
+    population['humidity_pre_covid'] = population['Country Code'].apply(
+        lambda x: min_temp_pre_covid[x] if x in max_temp_post_covid else None)
+    population['max_temp_post_covid'] = population['Country Code'].apply(
+        lambda x: max_temp_post_covid[x] if x in max_temp_post_covid else None)
+    population['min_temp_post_covid'] = population['Country Code'].apply(
+        lambda x: min_temp_post_covid[x] if x in max_temp_post_covid else None)
+    population['humidity_post_covid'] = population['Country Code'].apply(
+        lambda x: min_temp_post_covid[x] if x in max_temp_post_covid else None)
+
     population.fillna(0, inplace=True)
 
     population = population.reset_index(drop=True).to_json(orient='records')

@@ -1,0 +1,3 @@
+To run the program get inside this folder and type python3 app.py 
+
+A key error might come up. This is due to the glitches in the API which sources our data. If this happens please retry running the server.  

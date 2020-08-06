@@ -27,12 +27,12 @@ function draw_bar(cv_data, width, height, color_country_mapping) {
         .range([0, width - 2 * margin.left]);
 
     var svg = d3.select("#barchart").append("svg")
-        .attr("width", width)
+        .attr("width", width + 100)
         .attr("height", height - margin.top)
         .style('overflow-y', 'scroll')
         .append("g")
         .attr("transform",
-            "translate(" + margin.left + "," + 2 * margin.top + ")")
+            "translate(" + margin.left / 2 + "," + 2 * margin.top + ")")
         ;
     i = 0
     reduced = []
@@ -98,10 +98,27 @@ function draw_bar(cv_data, width, height, color_country_mapping) {
                     }
                     return 5
                 })
+            var tooltip = d3.select("#scatterplot")
+                .append("div")
+                .style("opacity", 0)
+                .attr("class", "tooltip")
+                .style("background-color", "white")
+                .style("border", "solid")
+                .style("border-width", "1px")
+                .style("border-radius", "5px")
+                .style("padding", "10px")
+
+            tooltip
+                .style("opacity", 1)
+            tooltip
+                .html("" + d.Country)
+                .style("left", (d3.mouse(this)[0] + 120) * 3 + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+                .style("top", (d3.mouse(this)[1]) / 2 + "px")
 
             var par = d3.select("#parallel")
             par.select("div").remove()
             parallel(par_data, $("#parallel").width(), $("#parallel").height(), selected, color_country_mapping)
+            par.selectAll(".axis .tick text").style("opacity", 1)
         }
         else {
 
@@ -111,14 +128,17 @@ function draw_bar(cv_data, width, height, color_country_mapping) {
             selected = []
 
             line.style("opacity", 1)
-            scatter.style("opacity", 0.5)
+            scatter.style("opacity", 1)
             scatter.attr("r", 5)
-
+            tooltip = d3.selectAll(".tooltip")
+            tooltip
+                .remove()
 
 
             var par = d3.select("#parallel")
             par.select("div").remove()
             parallel(par_data, $("#parallel").width(), $("#parallel").height(), null, color_country_mapping)
+            par.selectAll(".axis .tick text").style("opacity", 0)
         }
 
         if (selected == []) {
@@ -146,13 +166,23 @@ function draw_bar(cv_data, width, height, color_country_mapping) {
         .attr("height", y.bandwidth())
         .on('click', clicked)
 
+
         ;
 
     // add the x Axis
     svg.append("g")
         .attr("transform", "translate(0," + (- 20) + ")")
         .call(d3.axisBottom(x).tickFormat(d3.formatPrefix(".1", 1e6)))
-        .style('stroke', '#fff');
+        .style('stroke', '#fff')
+        .attr('y', 30)
+        .append("text")
+        .attr('x', width / 2)
+        .attr('dy', '.1em')
+        .attr('text-anchor', 'end')
+        .attr('fill', 'rgb(54, 54, 54)')
+        .attr('font-size', '1.2em')
+        .text("Total Confirmed");
+    ;
 
     // add the y Axis
     svg.append("g")

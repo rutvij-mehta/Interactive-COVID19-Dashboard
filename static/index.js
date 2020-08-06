@@ -16,10 +16,10 @@ $.get("/data", function (data) {
   plot_data = createDataLinePlot(timeseries2, dates, "new_case")
   par_data = update_par_data(par_data, plot_data)
 
-  ColorRange = [d3.interpolateCool(0)]
+  ColorRange = [d3.interpolateTurbo(0)]
   prev = 0
   for (var i = 1; i < plot_data.length; i++) {
-    ColorRange[i] = d3.interpolateCool(prev + 1 / plot_data.length)
+    ColorRange[i] = d3.interpolateTurbo(prev + 1 / plot_data.length)
     prev = prev + 1 / plot_data.length
   }
 
@@ -59,6 +59,8 @@ $.get("/data", function (data) {
   df = JSON.parse(data["parallel_cords"]);
   parallel(par_data, width, height, null, color_country_mapping);
 });
+
+
 
 function update_par_data(par_data, timeseries) {
   new_data = {}
