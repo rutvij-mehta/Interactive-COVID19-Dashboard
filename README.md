@@ -11,7 +11,9 @@ The aim of the project is to help users with no background in medicine understan
 
 ## Requirements 
 Python 3.7
+
 Browser: Google Chrome/Firefox/Safari/Edge
+
 Flask
 
 ## Instructions 
